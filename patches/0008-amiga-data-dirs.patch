@@ -24,32 +24,20 @@ Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
    os_name = platforminfo.GetOperatingSystemFamilyName();
 --- a/model/src/base_platform.cpp
 +++ b/model/src/base_platform.cpp
-@@ -97,6 +97,24 @@
+@@ -97,6 +97,12 @@
  
  void appendOSDirSlash(wxString* pString);
  
 +#ifdef __AMIGAOS3__
-+#include <proto/dos.h>
-+#include <string.h>
-+// The program's own drawer, as a full path ending in '/' (or ':' at the
-+// root of a volume), so names can be added to it directly.
-+static wxString AmigaProgramDrawer() {
-+  static char buf[512];
-+  if (!buf[0]) {
-+    BPTR lock = GetProgramDir();
-+    if (!lock || !NameFromLock(lock, (STRPTR)buf, sizeof buf - 1))
-+      strcpy(buf, "PROGDIR:");
-+    size_t n = strlen(buf);
-+    if (n && buf[n - 1] != ':' && buf[n - 1] != '/') strcat(buf, "/");
-+  }
-+  return wxString(buf);
-+}
++// the program's own drawer, ending in '/' or ':' (src/amiga_progdir.c)
++extern "C" const char* amiga_program_drawer(void);
++static wxString AmigaProgramDrawer() { return wxString(amiga_program_drawer()); }
 +#endif
 +
  BasePlatform* g_BasePlatform;
  
  #ifdef __ANDROID__
-@@ -278,6 +296,10 @@
+@@ -278,6 +284,10 @@
  #endif
  
      if (g_bportable) m_SData_Dir = GetHomeDir();
@@ -60,7 +48,7 @@ Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
    }
  
    return m_SData_Dir;
-@@ -362,6 +384,14 @@
+@@ -362,6 +372,14 @@
  #endif
  
      if (g_bportable) m_PrivateDataDir = GetHomeDir();

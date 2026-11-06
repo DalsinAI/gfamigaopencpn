@@ -85,7 +85,7 @@ NONET_GUI :=
 # Amiga parts of this port (src/)
 # wxJSON's reader and writer on json.library (src/wxjson_jsonlib.cpp, in
 # place of libs/wxJSON/src/jsonreader.cpp and jsonwriter.cpp)
-PORT_SRC := net_parked.cpp wxjson_jsonlib.cpp ocpn_json.cpp pugixml_oxp.cpp tinyxml_oxp.cpp sha1_gfcrypto.c
+PORT_SRC := net_parked.cpp wxjson_jsonlib.cpp ocpn_json.cpp pugixml_oxp.cpp tinyxml_oxp.cpp sha1_gfcrypto.c amiga_progdir.c
 # GLU's tesselator (OpenCPN's own copy, libs/glu), which its region and S-52
 # code use with OpenGL on or off; the host check links the system's GLU
 GLU_SRC :=
