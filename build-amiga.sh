@@ -204,8 +204,23 @@ P="$WORK/pkg/OpenCPN"
 rm -rf "$WORK/pkg"; mkdir -p "$P"
 cp "$OUT/OpenCPN" "$P/"
 mkdir -p "$P/Libs"; cp "$JL/json.library" "$CL/lib/gfopencrypto.library" "$P/Libs/"
-cp -R "$SRC/data" "$P/"
-mkdir -p "$P/uidata"; cp -R "$SRC/resources"/. "$P/uidata/" 2>/dev/null || :
+# data/ is laid out as OpenCPN installs its share/opencpn (CMakeLists.txt):
+# its data drawer, with uidata/ (styles, tool icons, the SVG themes) and
+# ssfndata/ beside s57data/ and the rest
+D="$P/data"
+cp -R "$SRC/data" "$D"
+mkdir -p "$D/uidata" "$D/ssfndata"
+for f in styles.xml toolicons_journeyman.png toolicons_journeyman_flat.png toolicons_traditional.png \
+    iconRMinus.png iconRPlus.png iconMinimum.png iconStandard.png iconUserStd.png iconAll.png \
+    DragHandle.svg eye.svg eyex.svg eyeGray.svg iENC_All.svg iENC_Minimum.svg iENC_Standard.svg \
+    iENC_UserStd.svg iENC_RPlus.svg iENC_RMinus.svg package-x-generic.png plus.svg; do
+    cp "$SRC/resources/bitmaps/$f" "$D/uidata/"
+done
+for t in markicons traditional journeyman journeyman_flat MUI_flat; do
+    cp -R "$SRC/data/svg/$t" "$D/uidata/"
+done
+[ -d "$SRC/plugins/icons" ] && cp -R "$SRC/plugins/icons" "$D/uidata/plugins"
+cp "$SRC"/data/ssfn/*.sfn "$D/ssfndata/"
 cp "$SRC/COPYING.gplv2" "$P/" 2>/dev/null || :
 if command -v lha >/dev/null 2>&1; then
     (cd "$WORK/pkg" && lha -aq "$OUT/OpenCPN-$OCPN_VERSION.lha" OpenCPN >/dev/null) && ls -l "$OUT/OpenCPN-$OCPN_VERSION.lha"
