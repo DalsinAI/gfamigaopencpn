@@ -11,6 +11,8 @@ OpenCPN and what it builds on are fetched at build time at the commits `opencpn.
 - NMEA 0183 and NMEA 2000 come in over serial: `src/serial_amiga.cc` is the serial library on `serial.device` and the devices that speak its commands (USB serial adapters). Ports are listed from `DEVS:` and named `serial.device/0`.
 - Sound (alarms) plays through wxSound, which the toolkit puts on AHI.
 - SQLite is our own Amiga build, gfopensqlite (AmigaDOS file names, locks on `Lock()`), in place of the copy OpenCPN carries.
+- JSON is read and written by json.library (GFOpenJSON), shipped in the program's `Libs/`: `src/wxjson_jsonlib.cpp` gives OpenCPN's wxJSON reader and writer on it, and `compat/include/rapidjson/` the part of rapidjson it uses (Signal K data), so neither JSON library OpenCPN carries is built.
+- XML is read by OXP, GFOpenXML's parser: `src/pugixml_oxp.cpp` and `src/tinyxml_oxp.cpp` give the pugixml (GPX, settings, chart symbols) and TinyXML (styles, KML) calls OpenCPN makes, in place of the copies it carries.
 - NMEA 0183 and NMEA 2000 over TCP and UDP use the toolkit's sockets (bsdsocket.library).
 - Not in this build yet (`patches/0005`, `src/net_parked.cpp`): Signal K, the REST server and sending routes to another OpenCPN, mDNS discovery, and downloads (chart catalogues), which need a websocket, HTTP server and HTTP client on bsdsocket; plugins (shared libraries elsewhere, `patches/0002`); Garmin host mode upload (`patches/0004`).
 

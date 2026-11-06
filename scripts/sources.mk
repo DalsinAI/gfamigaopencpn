@@ -47,7 +47,6 @@ LIB_SRC := \
     libs/serial/src/serial.cc \
     $(addprefix libs/libtess2/Source/,bucketalloc.c dict.c geom.c mesh.c priorityq.c sweep.c tess.c \
         Striper.cpp CustomArray.cpp Adjacency.cpp RevisitedRadix.cpp) \
-    $(addprefix libs/tinyxml/src/,tinyxml.cpp tinyxmlerror.cpp tinyxmlparser.cpp) \
     $(addprefix libs/manual/src/,manual.cpp manual_dlg.cpp) \
     $(addprefix libs/s57-charts/src/,ogrs57datasource.cpp ogrs57layer.cpp s57classregistrar.cpp \
         s57featuredefns.cpp s57reader.cpp s57registrar_mgr.cpp) \
@@ -68,12 +67,11 @@ LIB_SRC := \
         talkerid.cpp rmc.cpp hexvalue.cpp lat.cpp expid.cpp wpl.cpp rte.cpp ths.cpp hdt.cpp hdg.cpp hdm.cpp \
         hvd.cpp gll.cpp vtg.cpp gga.cpp gsv.cpp GPwpl.cpp apb.cpp xte.cpp mwd.cpp mwv.cpp) \
     $(addprefix libs/observable/src/,observable_confvar.cpp observable.cpp) \
-    libs/pugixml/pugixml.cpp \
     $(addprefix libs/s52plib/src/,chartsymbols.cpp s52plib.cpp s52cnsy.cpp s52utils.cpp TexFont.cpp \
         DepthFont.cpp mygeom.cpp s52_plib_utils.cpp) \
     $(addprefix libs/o_sound/src/,sound.cpp ocpn_wx_sound.cpp factory.cpp sound_file_loader.cpp \
         sound_loader_factory.cpp system_cmd_sound.cpp) \
-    $(addprefix libs/wxJSON/src/,jsonreader.cpp jsonwriter.cpp jsonval.cpp)
+    libs/wxJSON/src/jsonval.cpp
 
 SHP_SRC := shpopen.c dbfopen.c safileio.c sbnsearch.c shptree.c
 
@@ -86,7 +84,9 @@ NONET_MODEL := certificates downloader peer_client mdns_query mdns_service comm_
 NONET_GUI :=
 
 # Amiga parts of this port (src/)
-PORT_SRC := net_parked.cpp
+# wxJSON's reader and writer on json.library (src/wxjson_jsonlib.cpp, in
+# place of libs/wxJSON/src/jsonreader.cpp and jsonwriter.cpp)
+PORT_SRC := net_parked.cpp wxjson_jsonlib.cpp ocpn_json.cpp pugixml_oxp.cpp tinyxml_oxp.cpp
 # GLU's tesselator (OpenCPN's own copy, libs/glu), which its region and S-52
 # code use with OpenGL on or off; the host check links the system's GLU
 GLU_SRC :=

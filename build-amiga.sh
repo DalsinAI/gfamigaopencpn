@@ -3,8 +3,8 @@
 # (fpuauto), charts drawn with wxDC (OpenGL off). The GFOpenWX Toolkit's SDK
 # first (once for each toolkit commit), fpuauto's library, then OpenCPN.
 #   STOVE=.../stoves/os32-gcc16-open6 OUT=out ./build-amiga.sh
-# OpenCPN, rapidjson, shapelib, SQLite (as gfopensqlite builds it), the
-# toolkit and fpuauto are fetched at the commits opencpn.lock gives; nothing
+# OpenCPN, shapelib, SQLite (as gfopensqlite builds it),
+# json.library, OXP (gfopenxml), the toolkit and fpuauto are fetched at the commits opencpn.lock gives; nothing
 # third-party is kept here. OUT gets
 # OpenCPN and OpenCPN-<version>.lha (the program with its data drawer).
 # Copyright (c) 2026 AmiCradle Team
@@ -26,8 +26,12 @@ fetch() {   # name repo commit [paths...]: one commit, its tree (or those paths)
     if [ "$(cat "$d/.commit" 2>/dev/null)" != "$c" ]; then
         rm -rf "${d:?}"; mkdir -p "$d"
         git -C "$d" init -q
-        git -C "$d" fetch -q --depth 1 "$repo" "$c"
-        if [ $# -gt 0 ]; then git -C "$d" checkout -q FETCH_HEAD -- "$@"; else git -C "$d" checkout -q FETCH_HEAD; fi
+        if [ $# -gt 0 ]; then   # only those paths' files are downloaded
+            git -C "$d" fetch -q --depth 1 --filter=blob:none "$repo" "$c"
+            git -C "$d" checkout -q FETCH_HEAD -- "$@"
+        else
+            git -C "$d" fetch -q --depth 1 "$repo" "$c"; git -C "$d" checkout -q FETCH_HEAD
+        fi
         echo "$c" > "$d/.commit"
     fi
 }
@@ -74,8 +78,22 @@ if [ "$(cat "$SQL/.stamp" 2>/dev/null)" != "$GFSQLITE_COMMIT $SQLITE_SHA256" ]; 
     echo "$GFSQLITE_COMMIT $SQLITE_SHA256" > "$SQL/.stamp"
 fi
 
-# ---- rapidjson and shapelib, with the patches OpenCPN applies to them
-fetch rapidjson "$RAPIDJSON_REPO" "$RAPIDJSON_COMMIT"
+# ---- json.library (GFOpenJSON), with GFOpenBrowser's own build script;
+# OpenCPN's JSON is read and written by it (src/wxjson_jsonlib.cpp)
+fetch gfjson "$GFJSON_REPO" "$GFJSON_COMMIT" src/jsonlib scripts/build-json-library.sh toolchain/m68k-soft-m68040.specs
+GFJSON="$WORK/deps/gfjson"; JL="$WORK/jsonlib"
+if [ ! -f "$JL/json.library" ] || [ "$(cat "$JL/.commit" 2>/dev/null)" != "$GFJSON_COMMIT" ]; then
+    rm -rf "${JL:?}"
+    STOVE="$STOVE" sh "$GFJSON/scripts/build-json-library.sh" "$JL" > "$WORK/jsonlib.log" 2>&1 \
+        || { tail -20 "$WORK/jsonlib.log"; exit 1; }
+    echo "$GFJSON_COMMIT" > "$JL/.commit"
+fi
+
+# ---- OXP, GFOpenXML's parser: OpenCPN's XML (src/pugixml_oxp.cpp, src/tinyxml_oxp.cpp)
+fetch gfxml "$GFXML_REPO" "$GFXML_COMMIT" oxp/include oxp/src/oxp.c oxp/src/oxp_dom.c oxp/src/oxp_int.h
+GFXML="$WORK/deps/gfxml"
+
+# ---- shapelib, with the patches OpenCPN applies to it
 fetch shapelib "$SHAPELIB_REPO" "$SHAPELIB_COMMIT"
 fetch opencpn "$OCPN_REPO" "$OCPN_COMMIT"
 OC="$WORK/deps/opencpn"
@@ -84,14 +102,13 @@ OC="$WORK/deps/opencpn"
 # change). The tree is made afresh and copied over the last one by content,
 # so only files a patch changed get new times and make rebuilds only those
 # (the makefile keeps each object's header list)
-SRC="$WORK/opencpn-$OCPN_VERSION"; RJ="$WORK/rapidjson"; SHP="$WORK/shapelib"
+SRC="$WORK/opencpn-$OCPN_VERSION"; SHP="$WORK/shapelib"
 PSUM=$(cat "$HERE"/patches/*.patch "$HERE/opencpn.lock" | sha256sum | cut -c1-16)
 if [ "$(cat "$SRC/.patched" 2>/dev/null)" != "$PSUM" ]; then
-    F="$WORK/fresh"; rm -rf "$F"; mkdir -p "$F/opencpn" "$F/rapidjson" "$F/shapelib"
+    F="$WORK/fresh"; rm -rf "$F"; mkdir -p "$F/opencpn" "$F/shapelib"
     cp -R "$OC"/. "$F/opencpn"/; rm -rf "$F/opencpn/.git"
-    cp -R "$WORK/deps/rapidjson"/. "$F/rapidjson"/; cp -R "$WORK/deps/shapelib"/. "$F/shapelib"/
-    rm -rf "$F/rapidjson/.git" "$F/shapelib/.git"
-    for p in "$F"/opencpn/libs/rapidjson/patches/*.patch; do patch -s -d "$F/rapidjson" -p1 --ignore-whitespace < "$p"; done
+    cp -R "$WORK/deps/shapelib"/. "$F/shapelib"/
+    rm -rf "$F/shapelib/.git"
     for p in "$F"/opencpn/libs/shapelib/patches/*.patch; do patch -s -d "$F/shapelib" -p1 --ignore-whitespace < "$p"; done
     for p in "$F"/opencpn/libs/ShapefileCpp/patches/*.patch; do
         patch -s -d "$F/opencpn/libs/ShapefileCpp/ShapeFileCpp-b2681f8" -p1 --ignore-whitespace < "$p"
@@ -99,12 +116,12 @@ if [ "$(cat "$SRC/.patched" 2>/dev/null)" != "$PSUM" ]; then
     for p in "$HERE"/patches/*.patch; do
         patch -s -d "$F/opencpn" -p1 < "$p" || { echo "patch failed: $p"; exit 1; }
     done
-    mkdir -p "$SRC" "$RJ" "$SHP"
+    mkdir -p "$SRC" "$SHP"
     if command -v rsync >/dev/null 2>&1; then
-        rsync -rc --delete "$F/opencpn/" "$SRC/"; rsync -rc --delete "$F/rapidjson/" "$RJ/"
+        rsync -rc --delete "$F/opencpn/" "$SRC/"
         rsync -rc --delete "$F/shapelib/" "$SHP/"
     else
-        rm -rf "$SRC" "$RJ" "$SHP" "$WORK/obj"; mv "$F/opencpn" "$SRC"; mv "$F/rapidjson" "$RJ"; mv "$F/shapelib" "$SHP"
+        rm -rf "$SRC" "$SHP" "$WORK/obj"; mv "$F/opencpn" "$SRC"; mv "$F/shapelib" "$SHP"
     fi
     rm -rf "$F"
     echo "$PSUM" > "$SRC/.patched"
@@ -112,7 +129,7 @@ fi
 
 # ---- OpenCPN
 echo "opencpn: building (from $(( $(date +%s) - t0 )) s)"
-nice -n 19 make -k -j"$JOBS" -f "$HERE/scripts/Makefile.amiga" SRC="$SRC" RJ="$RJ" SHP="$SHP" SQL="$SQL" GFSQL="$GFSQL" \
+nice -n 19 make -k -j"$JOBS" -f "$HERE/scripts/Makefile.amiga" SRC="$SRC" SHP="$SHP" SQL="$SQL" GFSQL="$GFSQL" GFJSON="$GFJSON" GFXML="$GFXML" \
     OBJ="$WORK/obj" OUT="$OUT" TC="$TC" WXCONFIG="$SDK/bin/wx-config" PORT="$HERE" \
     SPECS="$HERE/scripts/m68k-soft-m68040.specs" FPUSPECS="$FA/fpuauto.specs" FPULIB="$FAL" \
     > "$WORK/opencpn.log" 2>&1 || {
@@ -130,6 +147,7 @@ echo "fpuauto: $("$OD" -d "$OUT/OpenCPN" | grep -c 'jsr.*<___wrap_' || true) wra
 P="$WORK/pkg/OpenCPN"
 rm -rf "$WORK/pkg"; mkdir -p "$P"
 cp "$OUT/OpenCPN" "$P/"
+mkdir -p "$P/Libs"; cp "$JL/json.library" "$P/Libs/"
 cp -R "$SRC/data" "$P/"
 mkdir -p "$P/uidata"; cp -R "$SRC/resources"/. "$P/uidata/" 2>/dev/null || :
 cp "$SRC/COPYING.gplv2" "$P/" 2>/dev/null || :
