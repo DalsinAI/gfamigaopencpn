@@ -4,7 +4,7 @@
 # first (once for each toolkit commit), fpuauto's library, then OpenCPN.
 #   STOVE=.../stoves/os32-gcc16-open6 OUT=out ./build-amiga.sh
 # OpenCPN, shapelib, SQLite (as gfopensqlite builds it),
-# json.library, OXP (gfopenxml), the toolkit and fpuauto are fetched at the commits opencpn.lock gives; nothing
+# json.library, gfopencrypto.library, OXP (gfopenxml), the toolkit and fpuauto are fetched at the commits opencpn.lock gives; nothing
 # third-party is kept here. OUT gets
 # OpenCPN and OpenCPN-<version>.lha (the program with its data drawer).
 # Copyright (c) 2026 AmiCradle Team
@@ -89,6 +89,17 @@ if [ ! -f "$JL/json.library" ] || [ "$(cat "$JL/.commit" 2>/dev/null)" != "$GFJS
     echo "$GFJSON_COMMIT" > "$JL/.commit"
 fi
 
+# ---- gfopencrypto.library (GFOpenCrypto), with its own build script; OpenCPN's
+# SHA-1 runs on it (src/sha1_gfcrypto.c)
+fetch gfcrypto "$GFCRYPTO_REPO" "$GFCRYPTO_COMMIT" build-amiga.sh specs src library include tests
+GFCRYPTO="$WORK/deps/gfcrypto"; CL="$WORK/gfcrypto"
+if [ ! -f "$CL/lib/gfopencrypto.library" ] || [ "$(cat "$CL/.commit" 2>/dev/null)" != "$GFCRYPTO_COMMIT" ]; then
+    rm -rf "${CL:?}"
+    STOVE="$STOVE" OUT="$CL" sh "$GFCRYPTO/build-amiga.sh" > "$WORK/gfcrypto.log" 2>&1 \
+        || { tail -20 "$WORK/gfcrypto.log"; exit 1; }
+    echo "$GFCRYPTO_COMMIT" > "$CL/.commit"
+fi
+
 # ---- OXP, GFOpenXML's parser: OpenCPN's XML (src/pugixml_oxp.cpp, src/tinyxml_oxp.cpp)
 fetch gfxml "$GFXML_REPO" "$GFXML_COMMIT" oxp/include oxp/src/oxp.c oxp/src/oxp_dom.c oxp/src/oxp_int.h
 GFXML="$WORK/deps/gfxml"
@@ -129,7 +140,7 @@ fi
 
 # ---- OpenCPN
 echo "opencpn: building (from $(( $(date +%s) - t0 )) s)"
-nice -n 19 make -k -j"$JOBS" -f "$HERE/scripts/Makefile.amiga" SRC="$SRC" SHP="$SHP" SQL="$SQL" GFSQL="$GFSQL" GFJSON="$GFJSON" GFXML="$GFXML" \
+nice -n 19 make -k -j"$JOBS" -f "$HERE/scripts/Makefile.amiga" SRC="$SRC" SHP="$SHP" SQL="$SQL" GFSQL="$GFSQL" GFJSON="$GFJSON" GFXML="$GFXML" GFCRYPTO="$GFCRYPTO" \
     OBJ="$WORK/obj" OUT="$OUT" TC="$TC" WXCONFIG="$SDK/bin/wx-config" PORT="$HERE" \
     SPECS="$HERE/scripts/m68k-soft-m68040.specs" FPUSPECS="$FA/fpuauto.specs" FPULIB="$FAL" \
     > "$WORK/opencpn.log" 2>&1 || {
@@ -147,7 +158,7 @@ echo "fpuauto: $("$OD" -d "$OUT/OpenCPN" | grep -c 'jsr.*<___wrap_' || true) wra
 P="$WORK/pkg/OpenCPN"
 rm -rf "$WORK/pkg"; mkdir -p "$P"
 cp "$OUT/OpenCPN" "$P/"
-mkdir -p "$P/Libs"; cp "$JL/json.library" "$P/Libs/"
+mkdir -p "$P/Libs"; cp "$JL/json.library" "$CL/lib/gfopencrypto.library" "$P/Libs/"
 cp -R "$SRC/data" "$P/"
 mkdir -p "$P/uidata"; cp -R "$SRC/resources"/. "$P/uidata/" 2>/dev/null || :
 cp "$SRC/COPYING.gplv2" "$P/" 2>/dev/null || :

@@ -27,3 +27,6 @@ GFJSON_COMMIT=f3f41ce595fecb3d817bb5b30aa9b3371e7c4f31
 # GFOpenXML: OXP, its parser, reads OpenCPN's XML (pugixml and TinyXML calls)
 GFXML_REPO=https://github.com/DalsinAI/gfopenxml
 GFXML_COMMIT=f5cad87472de931b71b2fa18a1f121da032a6bac
+# GFOpenCrypto (gfopentls): gfopencrypto.library 2.2's SHA-1 for OpenCPN's chart hashes
+GFCRYPTO_REPO=https://github.com/DalsinAI/gfopentls
+GFCRYPTO_COMMIT=028034eb778cbcf1c51e8e703bd347e4048b9ee7

@@ -39,7 +39,6 @@ GUI_SRC := \
     user_colors viewport waypointman_gui initwiz/wiz_ui_proto initwiz/wiz_ui ocpn_fontdlg \
 
 LIB_SRC := \
-    libs/ssl_sha1/src/sha1.c \
     $(addprefix libs/SQLiteCpp/src/,Backup.cpp Column.cpp Database.cpp Exception.cpp Savepoint.cpp Statement.cpp Transaction.cpp) \
     $(addprefix libs/ShapefileCpp/ShapeFileCpp-b2681f8/lib/src/,ShapefileReader.cpp Schema.cpp FeatureIterator.cpp \
         GeometryType.cpp Bounds.cpp Geometry.cpp Point.cpp Line.cpp Ring.cpp Polygon.cpp MultiPoint.cpp \
@@ -86,7 +85,7 @@ NONET_GUI :=
 # Amiga parts of this port (src/)
 # wxJSON's reader and writer on json.library (src/wxjson_jsonlib.cpp, in
 # place of libs/wxJSON/src/jsonreader.cpp and jsonwriter.cpp)
-PORT_SRC := net_parked.cpp wxjson_jsonlib.cpp ocpn_json.cpp pugixml_oxp.cpp tinyxml_oxp.cpp
+PORT_SRC := net_parked.cpp wxjson_jsonlib.cpp ocpn_json.cpp pugixml_oxp.cpp tinyxml_oxp.cpp sha1_gfcrypto.c
 # GLU's tesselator (OpenCPN's own copy, libs/glu), which its region and S-52
 # code use with OpenGL on or off; the host check links the system's GLU
 GLU_SRC :=

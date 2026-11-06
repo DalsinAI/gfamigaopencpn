@@ -1,7 +1,7 @@
 # OpenCPN for AmigaOS 3 (68040; the FPU when there is one, through fpuauto),
 # on the GFOpenWX Toolkit, charts drawn with wxDC (OpenGL off).
 # Run by build-amiga.sh with: SRC (OpenCPN's patched tree), GFSQL, GFJSON,
-# GFXML (our libraries' checkouts), SHP (shapelib), OBJ, OUT, TC (the stove's prefix), WXCONFIG, PORT (this
+# GFXML, GFCRYPTO (our libraries' checkouts), SHP (shapelib), OBJ, OUT, TC (the stove's prefix), WXCONFIG, PORT (this
 # repository), SPECS, FPUSPECS, FPULIB.
 # HOST=1 builds the same sources with the host's compiler and wx, as a
 # quick check of the source changes (nothing of it is shipped).
@@ -42,10 +42,10 @@ else
 JSONINC := -I$(GFJSON)/src/jsonlib/sdk/Include_H
 endif
 # OXP, GFOpenXML's parser, for OpenCPN's pugixml and TinyXML calls (GFXML: its checkout)
-INCS := -I$(PORT)/compat/include -I$(PORT)/src $(GLINC) $(JSONINC) -I$(GFXML)/oxp/include \
+INCS := -I$(PORT)/compat/include -I$(PORT)/src $(GLINC) $(JSONINC) -I$(GFXML)/oxp/include -I$(GFCRYPTO)/include \
     -I$(SRC)/gui/include/gui -I$(SRC)/gui/include -I$(SRC)/include -I$(SRC)/model/include \
     -I$(SRC)/resources -I$(SRC)/gui/src/mbtiles -I$(SRC)/gui/src/s57/include \
-    -I$(L)/ssl_sha1/include -I$(L)/SQLiteCpp/include -I$(SHP) -I$(L)/ShapefileCpp/ShapeFileCpp-b2681f8/lib/include \
+    -I$(L)/SQLiteCpp/include -I$(SHP) -I$(L)/ShapefileCpp/ShapeFileCpp-b2681f8/lib/include \
     -I$(L)/serial/include -I$(L)/std_filesystem/include -I$(L)/libtess2/Include \
     -I$(L)/manual/include -I$(L)/s57-charts/include -I$(L)/gui/include \
     -I$(L)/garmin/jeeps -I$(L)/lz4/src -I$(L)/gdal/include -I$(L)/gdal/include/gdal -I$(L)/geoprim/src \
@@ -64,7 +64,7 @@ OBJS := $(patsubst %,$(OBJ)/%.o,$(OCPN_SRC)) $(patsubst %,$(OBJ)/port/%.o,$(PORT
 ifneq ($(HOST),1)
 OBJS += $(OBJ)/sql/sqlite3.c.o $(OBJ)/sql/sqlite_amiga.c.o
 else
-OBJS += $(OBJ)/jsoncore/json_core.cpp.o
+OBJS += $(OBJ)/jsoncore/json_core.cpp.o $(OBJ)/gfcrypto/opencrypto_sha1.c.o $(OBJ)/gfcrypto/opencrypto_sha256.c.o
 endif
 
 all: $(OUT)/OpenCPN
@@ -103,6 +103,11 @@ $(OBJ)/sql/sqlite_amiga.c.o: $(GFSQL)/compat/sqlite_amiga.c
 $(OBJ)/jsoncore/json_core.cpp.o: $(GFJSON)/src/jsonlib/json_core.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) -O1 -std=gnu++20 -c $< -o $@
+
+# the host check's SHA-1: GFOpenCrypto's C code (on the Amiga, its library)
+$(OBJ)/gfcrypto/%.c.o: $(GFCRYPTO)/src/%.c
+	@mkdir -p $(dir $@)
+	$(CC) -O1 -I$(GFCRYPTO)/include -w -c $< -o $@
 
 $(OBJ)/oxp/%.c.o: $(GFXML)/oxp/src/%.c
 	@mkdir -p $(dir $@)
