@@ -3,8 +3,9 @@
 # (fpuauto), charts drawn with wxDC (OpenGL off). The GFOpenWX Toolkit's SDK
 # first (once for each toolkit commit), fpuauto's library, then OpenCPN.
 #   STOVE=.../stoves/os32-gcc16-open6 OUT=out ./build-amiga.sh
-# OpenCPN, rapidjson, shapelib, the toolkit and fpuauto are fetched at the
-# commits opencpn.lock gives; nothing third-party is kept here. OUT gets
+# OpenCPN, rapidjson, shapelib, SQLite (as gfopensqlite builds it), the
+# toolkit and fpuauto are fetched at the commits opencpn.lock gives; nothing
+# third-party is kept here. OUT gets
 # OpenCPN and OpenCPN-<version>.lha (the program with its data drawer).
 # Copyright (c) 2026 AmiCradle Team
 set -eu
@@ -57,6 +58,22 @@ if [ "$(cat "$FAL/.commit" 2>/dev/null)" != "$FPUAUTO_COMMIT" ]; then
     echo "$FPUAUTO_COMMIT" > "$FAL/.commit"
 fi
 
+# ---- SQLite as gfopensqlite builds it: its amalgamation (checked against
+# the SHA-256 in opencpn.lock) with its AmigaDOS patch; its compat/ is
+# compiled with OpenCPN (scripts/Makefile.amiga)
+fetch gfopensqlite "$GFSQLITE_REPO" "$GFSQLITE_COMMIT"
+GFSQL="$WORK/deps/gfopensqlite"; SQL="$WORK/sqlite"
+if [ "$(cat "$SQL/.stamp" 2>/dev/null)" != "$GFSQLITE_COMMIT $SQLITE_SHA256" ]; then
+    Z="$WORK/deps/$SQLITE_ZIP.zip"
+    [ -f "$Z" ] || curl -sSfL -o "$Z" "$SQLITE_URL"
+    echo "$SQLITE_SHA256  $Z" | sha256sum -c - >/dev/null || { echo "SHA-256 mismatch: $Z"; rm -f "$Z"; exit 1; }
+    rm -rf "${SQL:?}"; mkdir -p "$SQL"
+    (cd "$WORK/deps" && rm -rf "$SQLITE_ZIP" && unzip -q "$Z")
+    cp "$WORK/deps/$SQLITE_ZIP"/sqlite3.c "$WORK/deps/$SQLITE_ZIP"/sqlite3.h "$WORK/deps/$SQLITE_ZIP"/sqlite3ext.h "$SQL"/
+    patch -s -d "$SQL" -p1 < "$GFSQL/patches/sqlite-3.53.4-amiga-paths.patch"
+    echo "$GFSQLITE_COMMIT $SQLITE_SHA256" > "$SQL/.stamp"
+fi
+
 # ---- rapidjson and shapelib, with the patches OpenCPN applies to them
 fetch rapidjson "$RAPIDJSON_REPO" "$RAPIDJSON_COMMIT"
 fetch shapelib "$SHAPELIB_REPO" "$SHAPELIB_COMMIT"
@@ -95,7 +112,7 @@ fi
 
 # ---- OpenCPN
 echo "opencpn: building (from $(( $(date +%s) - t0 )) s)"
-nice -n 19 make -k -j"$JOBS" -f "$HERE/scripts/Makefile.amiga" SRC="$SRC" RJ="$RJ" SHP="$SHP" \
+nice -n 19 make -k -j"$JOBS" -f "$HERE/scripts/Makefile.amiga" SRC="$SRC" RJ="$RJ" SHP="$SHP" SQL="$SQL" GFSQL="$GFSQL" \
     OBJ="$WORK/obj" OUT="$OUT" TC="$TC" WXCONFIG="$SDK/bin/wx-config" PORT="$HERE" \
     SPECS="$HERE/scripts/m68k-soft-m68040.specs" FPUSPECS="$FA/fpuauto.specs" FPULIB="$FAL" \
     > "$WORK/opencpn.log" 2>&1 || {

@@ -8,10 +8,17 @@ RAPIDJSON_REPO=https://github.com/Tencent/rapidjson
 RAPIDJSON_COMMIT=f54b0e47a08782a6131cc3d60f94d038fa6e0a51
 SHAPELIB_REPO=https://github.com/OSGeo/shapelib
 SHAPELIB_COMMIT=8e23c958f3dd1f5cc37139ce4f4e2824a84bc56a
-# GFOpenWX Toolkit (wxWidgets on GFOpenLayout): draft PR #4 (main a0b8736 with
-# sockets, book controls, printing, wizards) until it is merged
+# GFOpenWX Toolkit (wxWidgets on GFOpenLayout), main
 WXT_REPO=https://github.com/DalsinAI/gfopenwxtoolkit
-WXT_COMMIT=bf1e2f447158a54f9093028a44cacab4b8bb5fb3
+WXT_COMMIT=7fb2de8eb56eac123103f5cbff0cd787ab937268
 # fpuauto (amicradle-guest common/fpuauto): the FPU when there is one
 FPUAUTO_REPO=https://github.com/DalsinAI/amicradle-guest
 FPUAUTO_COMMIT=4a784c84b878fe0e9abade7006e67e1ded9b165c
+# SQLite: our own Amiga build (gfopensqlite: AmigaDOS names, dotfile locks
+# on Lock(), fchmod/fchown) in place of the copy OpenCPN carries, with the
+# amalgamation it names in its SOURCES
+GFSQLITE_REPO=https://github.com/DalsinAI/gfopensqlite
+GFSQLITE_COMMIT=f821293172134471c33602d0839257a710ad853c
+SQLITE_ZIP=sqlite-amalgamation-3530400
+SQLITE_URL=https://www.sqlite.org/2026/sqlite-amalgamation-3530400.zip
+SQLITE_SHA256=1e71ddf93849c6a6ecf58b827c0692073d2dd7ee40196158068f7b29f422e87d

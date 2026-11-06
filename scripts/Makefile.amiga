@@ -29,6 +29,11 @@ L := $(SRC)/libs
 DEFS := -DTIXML_USE_STL -DRAPIDJSON_HAS_STDSTRING=1 -DSQLITE_OMIT_LOAD_EXTENSION \
     -DSQLITE_THREADSAFE=1 -DSQLITE_OMIT_WAL -DSQLITE_MAX_MMAP_SIZE=0 -DHAVE_NANOSLEEP=0 -DHAVE_USLEEP=1 -DUSE_WX_LOGGING -DwxUSE_WEBVIEW=0 -DOCPN_AMIGA \
     -DocpnUSE_SVG -DocpnUSE_wxBitmapBundle -DOCPN_NO_LIBARCHIVE -DOCPN_NO_CURL -DOCPN_NO_SIGNALK -DOCPN_NO_REST_IO '-DPREFIX="PROGDIR:"'
+# SQLite on the Amiga is gfopensqlite's (SQL: its patched amalgamation,
+# GFSQL: the repository, for compat/), so its sqlite3.h comes first
+ifneq ($(HOST),1)
+SQLINC := -I$(SQL)
+endif
 INCS := -I$(PORT)/compat/include -I$(PORT)/src $(GLINC) \
     -I$(SRC)/gui/include/gui -I$(SRC)/gui/include -I$(SRC)/include -I$(SRC)/model/include \
     -I$(SRC)/resources -I$(SRC)/gui/src/mbtiles -I$(SRC)/gui/src/s57/include \
@@ -38,7 +43,7 @@ INCS := -I$(PORT)/compat/include -I$(PORT)/src $(GLINC) \
     -I$(L)/garmin/jeeps -I$(L)/lz4/src -I$(L)/gdal/include -I$(L)/gdal/include/gdal -I$(L)/geoprim/src \
     -I$(L)/iso8211/include -I$(L)/N2KParser/include -I$(L)/nmea0183/src \
     -I$(L)/observable/include -I$(L)/picosha2 -I$(L)/pugixml -I$(RJ)/include \
-    -I$(L)/s52plib/src -I$(L)/sqlite/include -I$(L)/o_sound/include -I$(L)/o_sound/include/o_sound -I$(L)/wxJSON/include \
+    -I$(L)/s52plib/src $(SQLINC) -I$(L)/sqlite/include -I$(L)/o_sound/include -I$(L)/o_sound/include/o_sound -I$(L)/wxJSON/include \
     -I$(L)/nlohmann-json -I$(L)/wxservdisc
 CFLAGS   := $(OPT) -MMD -MP -include amiga_first.h $(DEFS) $(INCS) -w
 # -Wno-template-body: GCC 16 makes rapidjson 1.1.0's unused StringRef assignment an error
@@ -48,6 +53,9 @@ CXXFLAGS := $(OPT) -MMD -MP -std=gnu++17 -include amiga_first.h $(DEFS) $(INCS) 
 include $(PORT)/scripts/sources.mk
 
 OBJS := $(patsubst %,$(OBJ)/%.o,$(OCPN_SRC)) $(patsubst %,$(OBJ)/port/%.o,$(PORT_SRC))
+ifneq ($(HOST),1)
+OBJS += $(OBJ)/sql/sqlite3.c.o $(OBJ)/sql/sqlite_amiga.c.o
+endif
 
 all: $(OUT)/OpenCPN
 
@@ -67,6 +75,20 @@ $(OBJ)/shp/%.c.o: $(SHP)/%.c
 $(OBJ)/libs/gui/%: CXXFLAGS := -I$(L)/gui/include $(CXXFLAGS)
 
 $(OBJ)/libs/glu/%: CFLAGS := -I$(L)/glu/include -I$(L)/glu/libtess $(CFLAGS)
+
+# gfopensqlite's flags (its build.sh), less SQLITE_DQS=0 and
+# SQLITE_OMIT_DEPRECATED, which OpenCPN's queries and SQLiteCpp were not
+# written for
+SQLFLAGS := $(OPT) -MMD -MP -D_DEFAULT_SOURCE=1 -D_POSIX_TIMERS=1 -D_POSIX_REALTIME_SIGNALS=1 -fno-common \
+    -DSQLITE_THREADSAFE=1 -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_OMIT_WAL -DSQLITE_MAX_MMAP_SIZE=0 \
+    -DSQLITE_DEFAULT_MEMSTATUS=0 -DHAVE_USLEEP=1 -DSQLITE_OS_UNIX=1 '-DSQLITE_DEFAULT_UNIX_VFS="unix-dotfile"' \
+    -DSQLITE_EXTRA_AUTOEXT=sqlite_amiga_autoext -I$(SQL) -include $(GFSQL)/compat/sqlite_amiga_pre.h -w
+$(OBJ)/sql/sqlite3.c.o: $(SQL)/sqlite3.c
+	@mkdir -p $(dir $@)
+	$(CC) $(SQLFLAGS) -c $< -o $@
+$(OBJ)/sql/sqlite_amiga.c.o: $(GFSQL)/compat/sqlite_amiga.c
+	@mkdir -p $(dir $@)
+	$(CC) $(SQLFLAGS) -c $< -o $@
 
 $(OBJ)/port/%.cpp.o: $(PORT)/src/%.cpp
 	@mkdir -p $(dir $@)

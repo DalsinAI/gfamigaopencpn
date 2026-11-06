@@ -71,7 +71,6 @@ LIB_SRC := \
     libs/pugixml/pugixml.cpp \
     $(addprefix libs/s52plib/src/,chartsymbols.cpp s52plib.cpp s52cnsy.cpp s52utils.cpp TexFont.cpp \
         DepthFont.cpp mygeom.cpp s52_plib_utils.cpp) \
-    libs/sqlite/src/sqlite3.c \
     $(addprefix libs/o_sound/src/,sound.cpp ocpn_wx_sound.cpp factory.cpp sound_file_loader.cpp \
         sound_loader_factory.cpp system_cmd_sound.cpp) \
     $(addprefix libs/wxJSON/src/,jsonreader.cpp jsonwriter.cpp jsonval.cpp)
@@ -91,6 +90,11 @@ PORT_SRC := net_parked.cpp
 # GLU's tesselator (OpenCPN's own copy, libs/glu), which its region and S-52
 # code use with OpenGL on or off; the host check links the system's GLU
 GLU_SRC :=
+# SQLite: gfopensqlite's on the Amiga (Makefile.amiga); OpenCPN's own copy
+# for the host check only
+ifeq ($(HOST),1)
+LIB_SRC += libs/sqlite/src/sqlite3.c
+endif
 ifneq ($(HOST),1)
 PORT_SRC += serial_amiga.cc gl_none.c libnix_extra.c
 GLU_SRC := $(addprefix libs/glu/libtess/,tess.c mesh.c priorityq.c sweep.c tessmono.c normal.c \
