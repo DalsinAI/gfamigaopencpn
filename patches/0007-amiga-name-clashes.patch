@@ -1,0 +1,47 @@
+OpenCPN 5.14.2 for AmigaOS 3: names that clash with the Amiga or with wx's generic dialogs.
+- ocpn_fontdlg.h: wx's generic font dialog is the platform one here and names the same ids.
+- libtess2 CustomArray.h: exec/types.h has BOOL as a short; the file keeps its own int BOOL.
+
+Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
+
+diff --git a/gui/include/gui/ocpn_fontdlg.h b/gui/include/gui/ocpn_fontdlg.h
+index 93d3ec2..84e2451 100644
+--- a/gui/include/gui/ocpn_fontdlg.h
++++ b/gui/include/gui/ocpn_fontdlg.h
+@@ -27,6 +27,11 @@
+  */
+ class OCPNFontPreviewer;  // forward in .cpp file
+ 
++#ifdef __AMIGAOS3__
++// wx's generic font dialog is this platform's, and its header names the
++// same ids with the same values.
++#include <wx/generic/fontdlgg.h>
++#else
+ enum {
+   wxID_FONT_UNDERLINE = 3000,
+   wxID_FONT_STYLE,
+@@ -35,6 +40,7 @@ enum {
+   wxID_FONT_COLOUR,
+   wxID_FONT_SIZE
+ };
++#endif
+ 
+ class WXDLLIMPEXP_CORE ocpnGenericFontDialog : public wxFontDialogBase {
+ public:
+diff --git a/libs/libtess2/Include/CustomArray.h b/libs/libtess2/Include/CustomArray.h
+index 0efcb6d..7ac2dd8 100644
+--- a/libs/libtess2/Include/CustomArray.h
++++ b/libs/libtess2/Include/CustomArray.h
+@@ -167,7 +167,11 @@
+ // MACROS
+ 
+ // Define BOOL if needed
+-#ifndef BOOL
++#if defined(__AMIGAOS3__)
++// exec/types.h has BOOL as a short; keep this file's own int BOOL apart.
++typedef int tess_BOOL;
++#define BOOL tess_BOOL
++#elif !defined(BOOL)
+ typedef int	BOOL;
+ #endif
+ 

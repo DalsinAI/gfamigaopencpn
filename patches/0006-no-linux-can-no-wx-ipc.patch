@@ -1,0 +1,90 @@
+OpenCPN 5.14.2 for AmigaOS 3: headers for a system that is neither Linux, Windows nor macOS, without wx IPC: the CAN frame struct as on Windows and macOS, and the dummy single-instance and local IPC (as Android has) when wx has no IPC.
+
+Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
+
+diff --git a/model/include/model/comm_can_util.h b/model/include/model/comm_can_util.h
+index 7f8f5a0..3416a70 100644
+--- a/model/include/model/comm_can_util.h
++++ b/model/include/model/comm_can_util.h
+@@ -28,7 +28,7 @@
+ #include <memory>
+ #include <string>
+ 
+-#if !defined(_WIN32) && !defined(__APPLE__)
++#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__AMIGAOS3__)
+ #include <linux/can.h>
+ #include <linux/can/raw.h>
+ #endif
+@@ -45,7 +45,7 @@ struct can_frame {
+ };
+ #endif
+ 
+-#if defined(__WXMAC__)
++#if defined(__WXMAC__) || defined(__AMIGAOS3__)
+ #define CAN_MAX_DLEN 8
+ 
+ struct can_frame {
+diff --git a/model/include/model/ipc_api.h b/model/include/model/ipc_api.h
+index 8c1751e..0990a36 100644
+--- a/model/include/model/ipc_api.h
++++ b/model/include/model/ipc_api.h
+@@ -32,6 +32,7 @@
+ 
+ std::string GetSocketPath();
+ 
++#if wxUSE_IPC
+ /**
+  * Implement LocalClientApi using a filesystem fifo/socket.
+  */
+@@ -114,6 +115,11 @@ public:
+   void Serve() {}
+ };
+ 
++#else
++// no wx IPC in this wx build (AmigaOS 3): only the dummies below
++class WXDLLIMPEXP_FWD_BASE wxConnectionBase;
++#endif  // wxUSE_IPC
++
+ /**
+  * Useless place holder for LocalServerApi
+  */
+diff --git a/model/src/ipc_api.cpp b/model/src/ipc_api.cpp
+index 1f81e93..7531ff3 100644
+--- a/model/src/ipc_api.cpp
++++ b/model/src/ipc_api.cpp
+@@ -26,7 +26,9 @@
+ #include "model/logger.h"
+ #include "model/ocpn_utils.h"
+ 
++#if wxUSE_IPC
+ IpcServer* IpcConnection::s_instance = nullptr;
++#endif
+ 
+ // FIXME (leamas) Bad name
+ std::string GetSocketPath() {
+@@ -36,6 +38,7 @@ std::string GetSocketPath() {
+   return dirpath.ToStdString() + sep + "opencpn-ipc";
+ }
+ 
++#if wxUSE_IPC  // the rest is wx IPC, which this wx build may not have
+ IpcClient::IpcClient(const std::string& path) {
+   connection = MakeConnection("localhost", path, "OpenCPN");
+   if (!connection)
+@@ -121,3 +124,4 @@ const void* IpcConnection::OnRequest(const wxString& topic,
+     return 0;
+   }
+ }
++#endif  // wxUSE_IPC
+diff --git a/model/src/ipc_factories.cpp b/model/src/ipc_factories.cpp
+index b994d41..0b62e6b 100644
+--- a/model/src/ipc_factories.cpp
++++ b/model/src/ipc_factories.cpp
+@@ -39,7 +39,7 @@ static InstanceCheck& GetStdInstanceChk() {
+   return std_check;
+ }
+ 
+-#ifdef __ANDROID__
++#if defined(__ANDROID__) || !wxUSE_IPC
+ 
+ std::unique_ptr<LocalClientApi> LocalClientApi::GetClient() {
+   return std::unique_ptr<LocalClientApi>(new DummyIpcClient());

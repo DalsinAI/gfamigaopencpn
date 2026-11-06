@@ -1,0 +1,32 @@
+# What this port builds on: fetched at build time, never shipped.
+# OpenCPN 5.14.2 (GPL v2 or later), tag Release_5.14.2
+OCPN_VERSION=5.14.2
+OCPN_REPO=https://github.com/OpenCPN/OpenCPN
+OCPN_COMMIT=bd6986a0854d89c662a3d3cab011e629337fcb88
+# shapelib 1.6.1, which OpenCPN's CMake fetches too
+SHAPELIB_REPO=https://github.com/OSGeo/shapelib
+SHAPELIB_COMMIT=8e23c958f3dd1f5cc37139ce4f4e2824a84bc56a
+# GFOpenWX Toolkit (wxWidgets on GFOpenLayout), main
+WXT_REPO=https://github.com/DalsinAI/gfopenwxtoolkit
+WXT_COMMIT=7fb2de8eb56eac123103f5cbff0cd787ab937268
+# fpuauto (amicradle-guest common/fpuauto): the FPU when there is one
+FPUAUTO_REPO=https://github.com/DalsinAI/amicradle-guest
+FPUAUTO_COMMIT=4a784c84b878fe0e9abade7006e67e1ded9b165c
+# SQLite: our own Amiga build (gfopensqlite: AmigaDOS names, dotfile locks
+# on Lock(), fchmod/fchown) in place of the copy OpenCPN carries, with the
+# amalgamation it names in its SOURCES
+GFSQLITE_REPO=https://github.com/DalsinAI/gfopensqlite
+GFSQLITE_COMMIT=f821293172134471c33602d0839257a710ad853c
+SQLITE_ZIP=sqlite-amalgamation-3530400
+SQLITE_URL=https://www.sqlite.org/2026/sqlite-amalgamation-3530400.zip
+SQLITE_SHA256=1e71ddf93849c6a6ecf58b827c0692073d2dd7ee40196158068f7b29f422e87d
+# json.library (GFOpenJSON), built from GFOpenBrowser's src/jsonlib and
+# shipped in the drawer's Libs/ (the host check uses its core)
+GFJSON_REPO=https://github.com/DalsinAI/gfopenbrowser
+GFJSON_COMMIT=f3f41ce595fecb3d817bb5b30aa9b3371e7c4f31
+# GFOpenXML: OXP, its parser, reads OpenCPN's XML (pugixml and TinyXML calls)
+GFXML_REPO=https://github.com/DalsinAI/gfopenxml
+GFXML_COMMIT=f5cad87472de931b71b2fa18a1f121da032a6bac
+# GFOpenCrypto (gfopentls): gfopencrypto.library 2.2's SHA-1 for OpenCPN's chart hashes
+GFCRYPTO_REPO=https://github.com/DalsinAI/gfopentls
+GFCRYPTO_COMMIT=028034eb778cbcf1c51e8e703bd347e4048b9ee7

@@ -1,0 +1,133 @@
+# OpenCPN for AmigaOS 3 (68040; the FPU when there is one, through fpuauto),
+# on the GFOpenWX Toolkit, charts drawn with wxDC (OpenGL off).
+# Run by build-amiga.sh with: SRC (OpenCPN's patched tree), GFSQL, GFJSON,
+# GFXML, GFCRYPTO (our libraries' checkouts), SHP (shapelib), OBJ, OUT, TC (the stove's prefix), WXCONFIG, PORT (this
+# repository), SPECS, FPUSPECS, FPULIB.
+# HOST=1 builds the same sources with the host's compiler and wx, as a
+# quick check of the source changes (nothing of it is shipped).
+# Copyright (c) 2026 AmiCradle Team
+
+ifeq ($(HOST),1)
+CC  ?= gcc
+CXX ?= g++
+AR  ?= ar
+OPT := -O0 -g0
+LDFLAGS :=
+SYSLIBS := -lpthread
+else
+CC  := $(TC)/bin/m68k-amigaos-gcc
+CXX := $(TC)/bin/m68k-amigaos-g++
+AR  := $(TC)/bin/m68k-amigaos-ar
+OPT := -m68040 -O2 -noixemul -fno-delete-null-pointer-checks -D__AMIGAOS3__
+LDFLAGS := -m68040 -noixemul -specs=$(SPECS) -specs=$(FPUSPECS) -L$(FPULIB)
+SYSLIBS := -lpthread -lsocket
+# the GL types and GLU's header: OpenCPN's own copy of Mesa's headers
+GLINC := -I$(SRC)/libs/gl_headers/android
+endif
+
+L := $(SRC)/libs
+DEFS := -DTIXML_USE_STL -DRAPIDJSON_HAS_STDSTRING=1 -DSQLITE_OMIT_LOAD_EXTENSION \
+    -DSQLITE_THREADSAFE=1 -DSQLITE_OMIT_WAL -DSQLITE_MAX_MMAP_SIZE=0 -DHAVE_NANOSLEEP=0 -DHAVE_USLEEP=1 -DUSE_WX_LOGGING -DwxUSE_WEBVIEW=0 -DOCPN_AMIGA \
+    -DocpnUSE_SVG -DocpnUSE_wxBitmapBundle -DOCPN_NO_LIBARCHIVE -DOCPN_NO_CURL -DOCPN_NO_SIGNALK -DOCPN_NO_REST_IO '-DPREFIX="PROGDIR:"'
+# SQLite on the Amiga is gfopensqlite's (SQL: its patched amalgamation,
+# GFSQL: the repository, for compat/), so its sqlite3.h comes first
+ifneq ($(HOST),1)
+SQLINC := -I$(SQL)
+endif
+# json.library: its SDK headers on the Amiga; its core, built in, for the
+# host check (GFJSON: GFOpenBrowser's checkout)
+ifeq ($(HOST),1)
+JSONINC := -I$(GFJSON)/src/jsonlib
+else
+JSONINC := -I$(GFJSON)/src/jsonlib/sdk/Include_H
+endif
+# OXP, GFOpenXML's parser, for OpenCPN's pugixml and TinyXML calls (GFXML: its checkout)
+INCS := -I$(PORT)/compat/include -I$(PORT)/src $(GLINC) $(JSONINC) -I$(GFXML)/oxp/include -I$(GFCRYPTO)/include \
+    -I$(SRC)/gui/include/gui -I$(SRC)/gui/include -I$(SRC)/include -I$(SRC)/model/include \
+    -I$(SRC)/resources -I$(SRC)/gui/src/mbtiles -I$(SRC)/gui/src/s57/include \
+    -I$(L)/SQLiteCpp/include -I$(SHP) -I$(L)/ShapefileCpp/ShapeFileCpp-b2681f8/lib/include \
+    -I$(L)/serial/include -I$(L)/std_filesystem/include -I$(L)/libtess2/Include \
+    -I$(L)/manual/include -I$(L)/s57-charts/include -I$(L)/gui/include \
+    -I$(L)/garmin/jeeps -I$(L)/lz4/src -I$(L)/gdal/include -I$(L)/gdal/include/gdal -I$(L)/geoprim/src \
+    -I$(L)/iso8211/include -I$(L)/N2KParser/include -I$(L)/nmea0183/src \
+    -I$(L)/observable/include -I$(L)/picosha2 \
+    -I$(L)/s52plib/src $(SQLINC) -I$(L)/sqlite/include -I$(L)/o_sound/include -I$(L)/o_sound/include/o_sound -I$(L)/wxJSON/include \
+    -I$(L)/nlohmann-json -I$(L)/wxservdisc
+CFLAGS   := $(OPT) -MMD -MP -include amiga_first.h $(DEFS) $(INCS) -w
+CXXFLAGS := $(OPT) -MMD -MP -std=gnu++17 -include amiga_first.h $(DEFS) $(INCS) $(shell $(WXCONFIG) --cxxflags) -w \
+    -Wno-template-body -fno-strict-aliasing
+
+include $(PORT)/scripts/sources.mk
+
+OBJS := $(patsubst %,$(OBJ)/%.o,$(OCPN_SRC)) $(patsubst %,$(OBJ)/port/%.o,$(PORT_SRC)) \
+    $(OBJ)/oxp/oxp.c.o $(OBJ)/oxp/oxp_dom.c.o
+ifneq ($(HOST),1)
+OBJS += $(OBJ)/sql/sqlite3.c.o $(OBJ)/sql/sqlite_amiga.c.o
+else
+OBJS += $(OBJ)/jsoncore/json_core.cpp.o $(OBJ)/gfcrypto/opencrypto_sha1.c.o $(OBJ)/gfcrypto/opencrypto_sha256.c.o
+endif
+
+all: $(OUT)/OpenCPN
+
+$(OBJ)/%.cpp.o: $(SRC)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(OBJ)/%.cc.o: $(SRC)/%.cc
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(OBJ)/%.c.o: $(SRC)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+$(OBJ)/shp/%.c.o: $(SHP)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+# libs/gui has a svg_icons.h of its own, as OpenCPN's own gui does
+$(OBJ)/libs/gui/%: CXXFLAGS := -I$(L)/gui/include $(CXXFLAGS)
+
+$(OBJ)/libs/glu/%: CFLAGS := -I$(L)/glu/include -I$(L)/glu/libtess $(CFLAGS)
+
+# gfopensqlite's flags (its build.sh), less SQLITE_DQS=0 and
+# SQLITE_OMIT_DEPRECATED, which OpenCPN's queries and SQLiteCpp were not
+# written for
+SQLFLAGS := $(OPT) -MMD -MP -D_DEFAULT_SOURCE=1 -D_POSIX_TIMERS=1 -D_POSIX_REALTIME_SIGNALS=1 -fno-common \
+    -DSQLITE_THREADSAFE=1 -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_OMIT_WAL -DSQLITE_MAX_MMAP_SIZE=0 \
+    -DSQLITE_DEFAULT_MEMSTATUS=0 -DHAVE_USLEEP=1 -DSQLITE_OS_UNIX=1 '-DSQLITE_DEFAULT_UNIX_VFS="unix-dotfile"' \
+    -DSQLITE_EXTRA_AUTOEXT=sqlite_amiga_autoext -I$(SQL) -include $(GFSQL)/compat/sqlite_amiga_pre.h -w
+$(OBJ)/sql/sqlite3.c.o: $(SQL)/sqlite3.c
+	@mkdir -p $(dir $@)
+	$(CC) $(SQLFLAGS) -c $< -o $@
+$(OBJ)/sql/sqlite_amiga.c.o: $(GFSQL)/compat/sqlite_amiga.c
+	@mkdir -p $(dir $@)
+	$(CC) $(SQLFLAGS) -c $< -o $@
+
+$(OBJ)/jsoncore/json_core.cpp.o: $(GFJSON)/src/jsonlib/json_core.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) -O1 -std=gnu++20 -c $< -o $@
+
+# the host check's SHA-1: GFOpenCrypto's C code (on the Amiga, its library)
+$(OBJ)/gfcrypto/%.c.o: $(GFCRYPTO)/src/%.c
+	@mkdir -p $(dir $@)
+	$(CC) -O1 -I$(GFCRYPTO)/include -w -c $< -o $@
+
+$(OBJ)/oxp/%.c.o: $(GFXML)/oxp/src/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(OPT) -MMD -MP -I$(GFXML)/oxp/include -w -c $< -o $@
+
+$(OBJ)/port/%.cpp.o: $(PORT)/src/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(OBJ)/port/%.cc.o: $(PORT)/src/%.cc
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(OBJ)/port/%.c.o: $(PORT)/src/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OUT)/OpenCPN: $(OBJS) $(patsubst %,$(OBJ)/shp/%.o,$(SHP_SRC))
+	@mkdir -p $(OUT)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(shell $(WXCONFIG) --libs std,aui,html,xml,richtext,adv) $(SYSLIBS) -lm
+
+.PHONY: all
+
+# each object's headers, from -MMD
+-include $(OBJS:.o=.d)
