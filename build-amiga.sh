@@ -18,6 +18,9 @@ WORK="${WORK:-${XDG_CACHE_HOME:-$HOME/.cache}/gfamigaopencpn/build}"
 OUT="${OUT:-$WORK/out}"; JOBS=${JOBS:-4}
 TC="$STOVE/prefix"
 mkdir -p "$WORK/deps" "$OUT"
+# gcc's temporary files go in the work tree, not the host's /tmp (which can
+# be full on a shared build machine); emptied at the start of each run
+export TMPDIR="$WORK/tmp"; rm -rf "${TMPDIR:?}"; mkdir -p "$TMPDIR"
 t0=$(date +%s)
 echo "stove: $("$TC/bin/m68k-amigaos-gcc" --version | head -1)"
 
