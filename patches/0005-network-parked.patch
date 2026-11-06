@@ -1,0 +1,170 @@
+OpenCPN 5.14.2 for AmigaOS 3: network parts this build leaves out for now: no curl (the mDNS peer check and the send-to-peer dialogs build without it), no Signal K (IXWebSocket), and the REST server without its mongoose io thread. NMEA over TCP/UDP stays in.
+
+Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
+
+diff --git a/gui/src/peer_client_dlg.cpp b/gui/src/peer_client_dlg.cpp
+index 0b462bb..58f5368 100644
+--- a/gui/src/peer_client_dlg.cpp
++++ b/gui/src/peer_client_dlg.cpp
+@@ -32,7 +32,9 @@
+ #include <wx/jsonreader.h>
+ #include <wx/tokenzr.h>
+ 
++#ifndef OCPN_NO_CURL
+ #include <curl/curl.h>
++#endif
+ 
+ #include "model/peer_client.h"
+ #include "model/rest_server.h"
+diff --git a/gui/src/send_to_peer_dlg.cpp b/gui/src/send_to_peer_dlg.cpp
+index 6fbbbc8..799e822 100644
+--- a/gui/src/send_to_peer_dlg.cpp
++++ b/gui/src/send_to_peer_dlg.cpp
+@@ -25,7 +25,9 @@
+ 
+ #include <wx/statline.h>
+ 
++#ifndef OCPN_NO_CURL
+ #include <curl/curl.h>
++#endif
+ 
+ #include "gl_headers.h"  // Must be included before anything using GL stuff
+ 
+@@ -69,8 +71,12 @@ static PeerDlgResult RunStatusDlg(PeerDlg kind, int status) {
+       if (status >= 0) {
+         ss << _("Server HTTP response is :") << status;
+       } else {
++#ifdef OCPN_NO_CURL
++        ss << _("Transfer error: ") << -status;
++#else
+         ss << _("Curl transfer error: ")
+            << curl_easy_strerror(static_cast<CURLcode>(-status));
++#endif
+       }
+       OCPNMessageDialog dlg(NULL, ss.str(), _("OpenCPN Info"),
+                             wxICON_ERROR | wxOK | wxCANCEL);
+diff --git a/model/src/comm_drv_factory.cpp b/model/src/comm_drv_factory.cpp
+index 255ac83..5f4aead 100644
+--- a/model/src/comm_drv_factory.cpp
++++ b/model/src/comm_drv_factory.cpp
+@@ -40,7 +40,11 @@
+ #include "model/comm_drv_n2k_serial.h"
+ #include "model/comm_drv_n0183_serial.h"
+ #include "model/comm_drv_n0183_net.h"
++#ifndef OCPN_NO_SIGNALK
+ #include "model/comm_drv_signalk_net.h"
++#else
++#include "model/logger.h"
++#endif
+ #include "model/comm_drv_n0183_android_int.h"
+ #include "model/comm_drv_n0183_android_bt.h"
+ #include "model/comm_navmsg_bus.h"
+@@ -102,8 +106,12 @@ void MakeCommDriver(const ConnectionParams* params) {
+     case NETWORK:
+       switch (params->NetProtocol) {
+         case SIGNALK: {
++#ifdef OCPN_NO_SIGNALK
++          MESSAGE_LOG << "Signal K connections are not in this build";
++#else
+           auto driver = std::make_unique<CommDriverSignalKNet>(params, msgbus);
+           registry.Activate(std::move(driver));
++#endif
+           break;
+         }
+         default: {
+@@ -154,6 +162,11 @@ void MakeCommDriver(const ConnectionParams* params) {
+   }
+ };
+ 
++#ifdef OCPN_NO_SIGNALK
++void initIXNetSystem() {}
++void uninitIXNetSystem() {}
++#else
+ void initIXNetSystem() { CommDriverSignalKNet::initIXNetSystem(); };
+ 
+ void uninitIXNetSystem() { CommDriverSignalKNet::uninitIXNetSystem(); };
++#endif
+diff --git a/model/src/mdns_cache.cpp b/model/src/mdns_cache.cpp
+index 894fcef..51c6008 100644
+--- a/model/src/mdns_cache.cpp
++++ b/model/src/mdns_cache.cpp
+@@ -23,7 +23,9 @@
+ 
+ #include <algorithm>
+ 
++#ifndef OCPN_NO_CURL
+ #include <curl/curl.h>
++#endif
+ 
+ #include "model/logger.h"
+ #include "model/mdns_cache.h"
+@@ -33,6 +35,10 @@
+  * care if we cannot recieve data.
+  */
+ static bool Ping(const std::string& url, long port = 8443L) {
++#ifdef OCPN_NO_CURL
++  DEBUG_LOG << "Not checking mdns host (no curl here): " << url;
++  return true;
++#else
+   CURL* c = curl_easy_init();
+   curl_easy_setopt(c, CURLOPT_URL, url.c_str());
+   curl_easy_setopt(c, CURLOPT_PORT, port);
+@@ -43,6 +49,7 @@ static bool Ping(const std::string& url, long port = 8443L) {
+   DEBUG_LOG << "Checked mdns host: " << url << ": "
+             << (ok ? "ok" : curl_easy_strerror(result));
+   return ok;
++#endif
+ }
+ 
+ MdnsCache& MdnsCache::GetInstance() {
+diff --git a/model/src/rest_server.cpp b/model/src/rest_server.cpp
+index 4080e27..b939ba8 100644
+--- a/model/src/rest_server.cpp
++++ b/model/src/rest_server.cpp
+@@ -44,7 +44,9 @@
+ #include "model/pincode.h"
+ #include "model/rest_server.h"
+ 
++#ifndef OCPN_NO_REST_IO
+ #include "mongoose.h"
++#endif
+ #include "observable_evt.h"
+ #include "model/navobj_db.h"
+ 
+@@ -140,6 +142,7 @@ struct RestIoEvtData {
+ };
+ 
+ /** Extract a HTTP variable from query string. */
++#ifndef OCPN_NO_REST_IO
+ static inline std::string HttpVarToString(const struct mg_str& query,
+                                           const char* var) {
+   std::string string;
+@@ -360,6 +363,8 @@ static void fn(struct mg_connection* c, int ev, void* ev_data, void* fn_data) {
+   }
+ }
+ 
++#endif  // OCPN_NO_REST_IO
++
+ std::string RestResultText(RestServerResult result) {
+   wxString s;
+   switch (result) {
+@@ -390,6 +395,11 @@ RestServer::IoThread::IoThread(RestServer& parent, std::string ip)
+     : run_flag(-1), m_parent(parent), m_server_ip(std::move(ip)) {}
+ 
+ void RestServer::IoThread::Run() {
++#ifdef OCPN_NO_REST_IO
++  MESSAGE_LOG << "The REST server is not in this build";
++  run_flag = -1;
++  m_parent.m_exit_sem.Post();
++#else
+   run_flag = 1;
+   struct mg_mgr mgr = {0};  // Event manager
+   mg_log_set(MG_LL_DEBUG);  // Set log level
+@@ -403,6 +413,7 @@ void RestServer::IoThread::Run() {
+   mg_mgr_free(&mgr);
+   run_flag = -1;
+   m_parent.m_exit_sem.Post();
++#endif
+ }
+ 
+ void RestServer::IoThread::Stop() { run_flag = 0; }

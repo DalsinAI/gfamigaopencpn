@@ -1,0 +1,101 @@
+OpenCPN 5.14.2 for AmigaOS 3: no libarchive. Plugins are shared libraries elsewhere; this build has none, so installing one from a tarball says so.
+
+Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
+
+diff --git a/gui/src/pluginmanager.cpp b/gui/src/pluginmanager.cpp
+index 9d114f3..e225889 100644
+--- a/gui/src/pluginmanager.cpp
++++ b/gui/src/pluginmanager.cpp
+@@ -59,8 +59,10 @@
+ #include <wordexp.h>
+ #endif
+ 
++#ifndef OCPN_NO_LIBARCHIVE
+ #include <archive.h>
+ #include <archive_entry.h>
++#endif
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <stdint.h>
+@@ -169,7 +171,10 @@
+ #include "gl_chart_canvas.h"
+ #endif
+ 
+-typedef __LA_INT64_T la_int64_t;  //  "older" libarchive versions support
++#ifndef OCPN_NO_LIBARCHIVE
++typedef __LA_INT64_T la_int64_t;
++#endif
++//  //  "older" libarchive versions support
+ enum { CurlThreadId = wxID_HIGHEST + 1 };
+ 
+ #if wxUSE_XLOCALE || !wxCHECK_VERSION(3, 0, 0)
+diff --git a/model/include/model/plugin_handler.h b/model/include/model/plugin_handler.h
+index a9f68ef..09e4544 100644
+--- a/model/include/model/plugin_handler.h
++++ b/model/include/model/plugin_handler.h
+@@ -34,7 +34,11 @@
+ 
+ #include <wx/cmdline.h>
+ 
++#ifndef OCPN_NO_LIBARCHIVE
+ #include <archive.h>
++#else
++struct archive;
++#endif
+ 
+ #include "model/catalog_parser.h"
+ #include "observable_evtvar.h"
+diff --git a/model/src/plugin_handler.cpp b/model/src/plugin_handler.cpp
+index 788e9a0..89df21c 100644
+--- a/model/src/plugin_handler.cpp
++++ b/model/src/plugin_handler.cpp
+@@ -48,10 +48,12 @@
+ #include <wx/window.h>
+ #include <wx/uri.h>
+ 
++#ifndef OCPN_NO_LIBARCHIVE
+ #include <archive.h>
+ #include <archive_entry.h>
+ 
+ typedef __LA_INT64_T la_int64_t;  //  "older" libarchive versions support
++#endif
+ 
+ #if defined(__MINGW32__) && defined(Yield)
+ #undef Yield  // from win.h, conflicts with mingw headers
+@@ -487,6 +489,7 @@ static void saveVersion(const std::string& name, const std::string& version) {
+   stream << version << endl;
+ }
+ 
++#ifndef OCPN_NO_LIBARCHIVE
+ static int copy_data(struct archive* ar, struct archive* aw) {
+   int r;
+   const void* buff;
+@@ -883,6 +886,8 @@ bool PluginHandler::ExplodeTarball(struct archive* src, struct archive* dest,
+   return false;  // notreached
+ }
+ 
++#endif  // OCPN_NO_LIBARCHIVE
++
+ /*
+  * Extract tarball into platform-specific user directories.
+  *
+@@ -916,6 +921,11 @@ bool PluginHandler::ExtractTarball(const std::string path,
+                                    std::string& filelist,
+                                    const std::string metadata_path,
+                                    bool only_metadata) {
++#ifdef OCPN_NO_LIBARCHIVE
++  last_error_msg = "This OpenCPN cannot install plugins";
++  MESSAGE_LOG << last_error_msg << ": " << path;
++  return false;
++#else
+   struct archive* src = archive_read_new();
+   archive_read_support_filter_gzip(src);
+   archive_read_support_format_tar(src);
+@@ -933,6 +943,7 @@ bool PluginHandler::ExtractTarball(const std::string path,
+   archive_read_free(src);
+   archive_write_free(dest);
+   return ok;
++#endif
+ }
+ 
+ PluginHandler* PluginHandler::GetInstance() {

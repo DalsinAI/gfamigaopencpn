@@ -1,0 +1,17 @@
+# What this port builds on: fetched at build time, never shipped.
+# OpenCPN 5.14.2 (GPL v2 or later), tag Release_5.14.2
+OCPN_VERSION=5.14.2
+OCPN_REPO=https://github.com/OpenCPN/OpenCPN
+OCPN_COMMIT=bd6986a0854d89c662a3d3cab011e629337fcb88
+# rapidjson 1.1.0 and shapelib 1.6.1, which OpenCPN's CMake fetches too
+RAPIDJSON_REPO=https://github.com/Tencent/rapidjson
+RAPIDJSON_COMMIT=f54b0e47a08782a6131cc3d60f94d038fa6e0a51
+SHAPELIB_REPO=https://github.com/OSGeo/shapelib
+SHAPELIB_COMMIT=8e23c958f3dd1f5cc37139ce4f4e2824a84bc56a
+# GFOpenWX Toolkit (wxWidgets on GFOpenLayout): draft PR #4 (main a0b8736 with
+# sockets, book controls, printing, wizards) until it is merged
+WXT_REPO=https://github.com/DalsinAI/gfopenwxtoolkit
+WXT_COMMIT=bf1e2f447158a54f9093028a44cacab4b8bb5fb3
+# fpuauto (amicradle-guest common/fpuauto): the FPU when there is one
+FPUAUTO_REPO=https://github.com/DalsinAI/amicradle-guest
+FPUAUTO_COMMIT=4a784c84b878fe0e9abade7006e67e1ded9b165c

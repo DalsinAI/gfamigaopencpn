@@ -1,0 +1,100 @@
+OpenCPN 5.14.2 for AmigaOS 3: Linux-only CAN interface list (libdnet) and Garmin host mode (jeeps, termios) left out.
+
+Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
+
+diff --git a/gui/src/connection_edit.cpp b/gui/src/connection_edit.cpp
+index a5addd1..6491c96 100644
+--- a/gui/src/connection_edit.cpp
++++ b/gui/src/connection_edit.cpp
+@@ -46,8 +46,10 @@
+ #include <serial/serial.h>
+ #include <sys/ioctl.h>
+ #include <sys/socket.h>
++#if defined(__linux__) && !defined(__ANDROID__)
+ #include "dnet.h"
+ #endif
++#endif
+ 
+ #ifdef __ANDROID__
+ #include "androidUTIL.h"
+diff --git a/gui/src/initwiz/wiz_ui.cpp b/gui/src/initwiz/wiz_ui.cpp
+index 31458a6..8f7ebe4 100644
+--- a/gui/src/initwiz/wiz_ui.cpp
++++ b/gui/src/initwiz/wiz_ui.cpp
+@@ -54,8 +54,11 @@
+ #include "model/svg_utils.h"
+ #ifndef __ANDROID__
+ #include "serial/serial.h"
++#ifndef OCPN_AMIGA  // no libdnet in the Amiga build
++#define OCPN_HAVE_DNET 1
+ #include "dnet.h"
+ #endif
++#endif
+ 
+ #define RECEIVE_BUFFER_LENGTH 256
+ 
+@@ -426,7 +429,7 @@ void FirstUseWizImpl::EnumerateUDP() {
+   m_rtConnectionInfo->Newline();
+ }
+ 
+-#ifndef __ANDROID__
++#ifdef OCPN_HAVE_DNET
+ static int print_route(const struct route_entry* entry, void* arg) {
+   if (entry->route_gw.__addr_u.__ip != 0) {
+     DEBUG_LOG << "Found Route with GW:" << addr_ntoa(&entry->route_dst)
+@@ -454,9 +457,10 @@ static int print_arp(const struct arp_entry* entry, void* arg) {
+ 
+ void FirstUseWizImpl::EnumerateTCP() {
+ #ifndef __ANDROID__
+-  route_t* r;
+   std::vector<std::string> ips;
+   ips.emplace_back("127.0.0.1");
++#ifdef OCPN_HAVE_DNET
++  route_t* r;
+ 
+   if ((r = route_open()) == nullptr) {
+     DEBUG_LOG << "route_open failed";
+@@ -474,6 +478,7 @@ void FirstUseWizImpl::EnumerateTCP() {
+       DEBUG_LOG << "arp_loop failed";
+     }
+   }
++#endif  // OCPN_HAVE_DNET
+ 
+   size_t progress = 0;
+   for (const auto& ip : ips) {
+@@ -543,8 +548,10 @@ void FirstUseWizImpl::EnumerateTCP() {
+       delete client;
+     }
+   }
++#ifdef OCPN_HAVE_DNET
+   route_close(r);
+   arp_close(arp);
++#endif
+   m_rtConnectionInfo->Newline();
+ #endif
+ }
+diff --git a/model/src/comm_n0183_output.cpp b/model/src/comm_n0183_output.cpp
+index c2ae9c8..70cfb6b 100644
+--- a/model/src/comm_n0183_output.cpp
++++ b/model/src/comm_n0183_output.cpp
+@@ -429,6 +429,7 @@ int SendRouteToGPS_N0183(Route* pr, const wxString& com_name,
+       registry.Deactivate(me);
+     }
+ 
++#ifdef USE_GARMINHOST
+     int lret_val;
+     dlg_ctx.set_value(20);
+ 
+@@ -468,6 +469,12 @@ int SendRouteToGPS_N0183(Route* pr, const wxString& com_name,
+       ret_val = 0;
+     }
+ 
++#else
++    // no Garmin host mode in this build
++    ret_val = ERR_GARMIN_INITIALIZE;
++    goto ret_point;
++#endif
++
+   ret_point:
+ 
+     dlg_ctx.set_value(100);
