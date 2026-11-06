@@ -1,0 +1,33 @@
+OpenCPN 5.14.2 for AmigaOS 3: the first-start wizard does not probe the network.
+Its UDP probe (a datagram socket on ports 10110, 2000 and 1458, waited on
+for a second each) never returned in the lab and the wizard hung on
+"Looking for UDP data feeds...". The UDP, TCP, Signal K and GPSD probes
+are left out; USB is still scanned, and network sources are set up in
+Options, Connections as before.
+
+Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
+
+--- a/gui/src/initwiz/wiz_ui.cpp
++++ b/gui/src/initwiz/wiz_ui.cpp
+@@ -653,6 +653,13 @@
+   wxTheApp->ProcessPendingEvents();
+   wxYield();
+   EnumerateUSB();
++#ifdef OCPN_AMIGA
++  // the network probes wait on sockets that do not time out here yet and
++  // the wizard hung; network sources are set up in Options > Connections
++  m_rtConnectionInfo->WriteText(
++      _("Network sources: set them up in Options, Connections."));
++  m_rtConnectionInfo->Newline();
++#else
+   m_rtConnectionInfo->WriteText(_("Looking for UDP data feeds..."));
+   m_rtConnectionInfo->Newline();
+   wxTheApp->ProcessPendingEvents();
+@@ -681,6 +688,7 @@
+   wxTheApp->ProcessPendingEvents();
+   wxYield();
+   EnumerateGPSD();
++#endif
+   wxTheApp->ProcessPendingEvents();
+   wxYield();
+   for (const auto& sks : g_sk_servers) {
