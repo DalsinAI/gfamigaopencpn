@@ -1,0 +1,40 @@
+OpenCPN 5.14.2 for AmigaOS 3: the style graphics and the settings file.
+- styles.cpp: the tool icon sheets were looked for at "uidata//x.png"; the
+  folder already ends in '/', and "//" is the parent folder on AmigaDOS, so
+  no style loaded. The separator is added only when it is missing.
+- base_platform.cpp: opencpn.conf goes in User/ with the rest of the
+  settings (it went to ENVARC:.OpenCPN, wx's user data folder).
+
+Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
+
+--- a/gui/src/styles.cpp
++++ b/gui/src/styles.cpp
+@@ -1163,9 +1163,12 @@
+         break;
+       }
+ 
+-      wxString fullFilePath = style->myConfigFileDir +
+-                              wxFileName::GetPathSeparator() +
+-                              style->graphicsFile;
++      wxString fullFilePath = style->myConfigFileDir;
++      // the folder already ends in a separator, and on AmigaDOS "//" is the
++      // parent folder, not a doubled slash
++      if (!fullFilePath.EndsWith(wxFileName::GetPathSeparator()))
++        fullFilePath += wxFileName::GetPathSeparator();
++      fullFilePath += style->graphicsFile;
+ 
+       if (!wxFileName::FileExists(fullFilePath)) {
+         wxString msg("Styles Graphics File not found: ");
+--- a/model/src/base_platform.cpp
++++ b/model/src/base_platform.cpp
+@@ -635,6 +635,10 @@
+     m_config_file_name.Append("opencpn");
+     appendOSDirSlash(&m_config_file_name);
+     m_config_file_name.Append("opencpn.ini");
++#elif defined __AMIGAOS3__
++    // beside the routes and the log, in User/ in the program's drawer
++    m_config_file_name = GetPrivateDataDir();
++    m_config_file_name.Append("/opencpn.conf");
+ #elif defined FLATPAK
+     m_config_file_name = GetPrivateDataDir();
+     m_config_file_name.Append("/opencpn.conf");
