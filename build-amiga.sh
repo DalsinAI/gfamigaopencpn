@@ -159,12 +159,24 @@ fi
 
 # ---- OpenCPN
 echo "opencpn: building (from $(( $(date +%s) - t0 )) s)"
-# objects built against the copies of pugixml, TinyXML, rapidjson and
-# ssl_sha1 that our libraries replace are built again (their header lists
-# still name those copies, which are in the tree, so make would keep them)
-if [ -d "$WORK/obj" ]; then
-    grep -rlE --include='*.d' 'libs/pugixml/|libs/tinyxml/|/rapidjson/include/|libs/ssl_sha1/' "$WORK/obj" 2>/dev/null \
-        | while read -r d; do rm -f "${d%.d}.o" "$d"; done
+# objects built against the copies of pugixml, TinyXML, rapidjson, the
+# wxJSON reader/writer and ssl_sha1 that our libraries replace are built
+# again, once: the sources that include those headers, directly or through
+# one of OpenCPN's own headers (older objects have no header lists)
+LIBKEY="oxp-jsonlib-gfcrypto-1"
+if [ -d "$WORK/obj" ] && [ "$(cat "$WORK/obj/.libkey" 2>/dev/null)" != "$LIBKEY" ]; then
+    PAT='pugixml\.hpp|tinyxml\.h|rapidjson/|ssl/sha1\.h|jsonreader\.h|jsonwriter\.h'
+    for pass in 1 2 3; do
+        HDRS=$(grep -rlE --include='*.h' --include='*.hpp' "#include *[<\"]([^\">]*/)?($PAT)" "$SRC/gui" "$SRC/model" "$SRC/include" "$SRC/libs" 2>/dev/null \
+            | sed 's#.*/##' | sort -u | tr '\n' '|' | sed 's/|$//; s/\./\\./g')
+        [ -n "$HDRS" ] && PAT="$PAT|$HDRS"
+    done
+    n=0
+    for f in $(grep -rlE --include='*.cpp' --include='*.cc' --include='*.c' "#include *[<\"]([^\">]*/)?($PAT)" "$SRC/gui" "$SRC/model" "$SRC/libs" 2>/dev/null); do
+        o="$WORK/obj/${f#$SRC/}.o"; [ -f "$o" ] && { rm -f "$o"; n=$((n+1)); }
+    done
+    echo "rebuilding $n objects made against the bundled XML, JSON and SHA-1 copies"
+    echo "$LIBKEY" > "$WORK/obj/.libkey"
 fi
 # stopped by itself before Cradle's 900 s (OCPN_BUDGET), saying how far it
 # got; objects are kept, so the next run goes on
