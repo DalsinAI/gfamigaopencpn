@@ -159,6 +159,13 @@ fi
 
 # ---- OpenCPN
 echo "opencpn: building (from $(( $(date +%s) - t0 )) s)"
+# objects built against the copies of pugixml, TinyXML, rapidjson and
+# ssl_sha1 that our libraries replace are built again (their header lists
+# still name those copies, which are in the tree, so make would keep them)
+if [ -d "$WORK/obj" ]; then
+    grep -rlE --include='*.d' 'libs/pugixml/|libs/tinyxml/|/rapidjson/include/|libs/ssl_sha1/' "$WORK/obj" 2>/dev/null \
+        | while read -r d; do rm -f "${d%.d}.o" "$d"; done
+fi
 # stopped by itself before Cradle's 900 s (OCPN_BUDGET), saying how far it
 # got; objects are kept, so the next run goes on
 touch "$WORK/.ocstart"
