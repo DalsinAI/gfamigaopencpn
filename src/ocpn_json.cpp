@@ -8,17 +8,17 @@
  * it (libraries/json.h: JSON_NODES, JSON_NTEXT): the same layout on the
  * Amiga and in the core */
 namespace {
-struct Block {
+struct JsonBlock {
   unsigned int magic, size, nodes, node_off, pool_off, pool_size, flags, reserved;
 };
-struct Node {
+struct JsonNode {
   unsigned int head, data;
 };
 }  // namespace
 const char *ojl::NumberText(const Doc *doc, unsigned node, size_t *len) {
-  const Block *b = (const Block *)doc;
+  const JsonBlock *b = (const JsonBlock *)doc;
   if (!b || node >= b->nodes) return 0;
-  const Node *n = (const Node *)((const char *)b + b->node_off) + node;
+  const JsonNode *n = (const JsonNode *)((const char *)b + b->node_off) + node;
   if ((n->head >> 28) != ojl::NUMBER) return 0;
   if (len) *len = n->data;
   return (const char *)b + b->pool_off + (n->head & 0x0FFFFFFFu);
