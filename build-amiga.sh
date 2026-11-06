@@ -15,7 +15,7 @@ STOVE=${STOVE:-"$HOME/AmiCradle/stoves/os32-gcc16-open6"}
 # the work tree lives outside the checkout (Cradle cleans its checkout
 # before every job), so a run that stops at the time limit goes on next time
 WORK="${WORK:-${XDG_CACHE_HOME:-$HOME/.cache}/gfamigaopencpn/build}"
-OUT="${OUT:-$WORK/out}"; JOBS=${JOBS:-12}
+OUT="${OUT:-$WORK/out}"; JOBS=${JOBS:-4}
 TC="$STOVE/prefix"
 mkdir -p "$WORK/deps" "$OUT"
 t0=$(date +%s)
