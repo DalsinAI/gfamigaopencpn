@@ -159,11 +159,15 @@ fi
 
 # ---- OpenCPN
 echo "opencpn: building (from $(( $(date +%s) - t0 )) s)"
-nice -n 19 make -k -j"$JOBS" -f "$HERE/scripts/Makefile.amiga" SRC="$SRC" SHP="$SHP" SQL="$SQL" GFSQL="$GFSQL" GFJSON="$GFJSON" GFXML="$GFXML" GFCRYPTO="$GFCRYPTO" \
+# stopped by itself before Cradle's 900 s (OCPN_BUDGET), saying how far it
+# got; objects are kept, so the next run goes on
+touch "$WORK/.ocstart"
+OB=${OCPN_BUDGET:-$(( 860 - ($(date +%s) - t0) ))}
+timeout "$OB" nice -n 19 make -k -j"$JOBS" -f "$HERE/scripts/Makefile.amiga" SRC="$SRC" SHP="$SHP" SQL="$SQL" GFSQL="$GFSQL" GFJSON="$GFJSON" GFXML="$GFXML" GFCRYPTO="$GFCRYPTO" \
     OBJ="$WORK/obj" OUT="$OUT" TC="$TC" WXCONFIG="$SDK/bin/wx-config" PORT="$HERE" \
     SPECS="$HERE/scripts/m68k-soft-m68040.specs" FPUSPECS="$FA/fpuauto.specs" FPULIB="$FAL" \
     > "$WORK/opencpn.log" 2>&1 || {
-        echo "objects: $(find "$WORK/obj" -name '*.o' | wc -l)"
+        echo "objects: $(find "$WORK/obj" -name '*.o' | wc -l), made this run: $(find "$WORK/obj" -name '*.o' -newer "$WORK/.ocstart" | wc -l), of $(grep -c '' "$WORK/obj/.count" 2>/dev/null || echo '?')"
         # each error once, without make's own lines, the first 150
         grep -E 'error:|undefined reference' "$WORK/opencpn.log" | sed "s#$SRC/##g; s#$WORK/##g" \
             | cut -c1-240 | awk '!seen[$0]++' | head -150
