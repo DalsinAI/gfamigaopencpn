@@ -44,9 +44,14 @@ if [ ! -x "$WXB/out/sdk/bin/wx-config" ] || [ "$(cat "$WXB/.rev" 2>/dev/null)" !
     # under Cradle's 900 s a long SDK build is stopped here first, so the job
     # says how far it got; its trees are kept and the next run goes on
     WXT_BUDGET=${WXT_BUDGET:-780}
-    touch "$WORK/.wxstart"
+    touch "$WORK/.wxstart"; rm -f "$WORK/wxps.txt"
+    # what is running just before the budget ends
+    ( sleep $((${WXT_BUDGET:-780} - 8)); ps -eo pid,etime,pcpu,rss,args 2>/dev/null \
+        | grep -E 'cc1|collect2|ld |/ld|ar |python3|make|cp -a' | grep -v grep | cut -c1-220 > "$WORK/wxps.txt" ) &
+    PSW=$!
     rc=0; timeout "$WXT_BUDGET" env STOVE="$STOVE" WORK="$WXB" OUT="$WXB/out" JOBS=$JOBS \
         sh "$WXT/build-amiga.sh" > "$WORK/wx.log" 2>&1 || rc=$?
+    kill "$PSW" 2>/dev/null || true
     if [ "$rc" -ne 0 ]; then
         [ "$rc" -eq 124 ] && echo "toolkit SDK: not done after $WXT_BUDGET s; run again to go on"
         echo "toolkit objects: base $(find "$WXB/base" -name '*.o' 2>/dev/null | wc -l), gui $(find "$WXB" -path "$WXB/base" -prune -o -name '*.o' -print 2>/dev/null | wc -l)"
@@ -54,6 +59,7 @@ if [ ! -x "$WXB/out/sdk/bin/wx-config" ] || [ "$(cat "$WXB/.rev" 2>/dev/null)" !
         echo "toolkit gui objects, newest:"; ls -lt "$WXB/gui/obj" 2>/dev/null | head -8
         echo "toolkit gui objects, oldest:"; ls -ltr "$WXB/gui/obj" 2>/dev/null | grep '\.o$' | head -3
         ls -l "$WXB/gui"/*.a 2>/dev/null
+        echo "running when stopped:"; cat "$WORK/wxps.txt" 2>/dev/null | head -30
         tail -12 "$WORK/wx.log"; exit 1
     fi
     echo "$WXT_COMMIT" > "$WXB/.rev"
