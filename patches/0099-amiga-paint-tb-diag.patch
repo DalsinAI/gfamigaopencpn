@@ -1,0 +1,51 @@
+Diagnostics only, never merged: logs the toolbar pixel in the scratch DC and on the window after the paint blit (lines start AMIGADIAG).
+
+--- a/gui/src/chcanv.cpp
++++ b/gui/src/chcanv.cpp
+@@ -12597,6 +12597,31 @@
+   ocpnDC scratch_dc(mscratch_dc);
+   DrawOverlayObjects(scratch_dc, ru);
+ 
++  static int amiga_npd = 0;
++  bool amiga_log = (++amiga_npd <= 40);
++  wxPoint amiga_pt(-1, -1);
++  if (amiga_log) {
++    wxString rl;
++    int nr = 0;
++    for (wxRegionIterator it(rgn_blit); it; it++, nr++) {
++      wxRect r = it.GetRect();
++      if (nr < 6) rl += wxString::Format(" [%d,%d %dx%d]", r.x, r.y, r.width, r.height);
++    }
++    wxString tb = "none";
++    wxString sp = "-";
++    if (g_MainToolbar && IsPrimaryCanvas()) {
++      wxRect tr = g_MainToolbar->GetToolbarRect();
++      tb = wxString::Format("%d,%d %dx%d", tr.x, tr.y, tr.width, tr.height);
++      amiga_pt = wxPoint(tr.x + 22, tr.y + 52);
++      wxColour c;
++      if (mscratch_dc.GetPixel(amiga_pt, &c))
++        sp = wxString::Format("%d,%d,%d", c.Red(), c.Green(), c.Blue());
++    }
++    wxRect ub = ru.GetBox();
++    wxLogMessage("AMIGADIAG paintdc #%d tb=%s scratchpx=%s ru=%d,%d %dx%d blitrects=%d%s",
++                 amiga_npd, tb, sp, ub.x, ub.y, ub.width, ub.height, nr, rl);
++  }
++
+   //    And finally, blit the scratch dc onto the physical dc
+   wxRegionIterator upd_final(rgn_blit);
+   while (upd_final) {
+@@ -12605,6 +12630,14 @@
+             rect.y);
+     upd_final++;
+   }
++  if (amiga_log && amiga_pt.x >= 0) {
++    wxColour c;
++    wxString dp = "-";
++    if (dc.GetPixel(amiga_pt, &c))
++      dp = wxString::Format("%d,%d,%d", c.Red(), c.Green(), c.Blue());
++    wxLogMessage("AMIGADIAG paintdc #%d after blit windowpx=%s", amiga_npd, dp);
++    wxLog::FlushActive();
++  }
+ 
+   //    Deselect the chart bitmap from the temp_dc, so that it will not be
+   //    destroyed in the temp_dc dtor
