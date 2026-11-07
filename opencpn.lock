@@ -6,9 +6,9 @@ OCPN_COMMIT=bd6986a0854d89c662a3d3cab011e629337fcb88
 # shapelib 1.6.1, which OpenCPN's CMake fetches too
 SHAPELIB_REPO=https://github.com/OSGeo/shapelib
 SHAPELIB_COMMIT=8e23c958f3dd1f5cc37139ce4f4e2824a84bc56a
-# GFOpenWX Toolkit (wxWidgets on GFOpenLayout): branch team3/opencpn-gaps-20261107, region Subtract fix (lab test)
+# GFOpenWX Toolkit (wxWidgets on GFOpenLayout): branch team3/memorydc-nobackfill-20261107 (main e184541 + memory DC keeps its drawing on release; lab test)
 WXT_REPO=https://github.com/DalsinAI/gfopenwxtoolkit
-WXT_COMMIT=4ae607e885b9277f5497a3cdf72ae12371aeaca5
+WXT_COMMIT=182ffe0c6735616d3812c7b9456a32af383481ae
 # fpuauto (amicradle-guest common/fpuauto): the FPU when there is one
 FPUAUTO_REPO=https://github.com/DalsinAI/amicradle-guest
 FPUAUTO_COMMIT=4a784c84b878fe0e9abade7006e67e1ded9b165c
