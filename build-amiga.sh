@@ -169,6 +169,13 @@ echo "opencpn: building (from $(( $(date +%s) - t0 )) s)"
 # wxJSON reader/writer and ssl_sha1 that our libraries replace are built
 # again, once: the sources that include those headers, directly or through
 # one of OpenCPN's own headers (older objects have no header lists)
+# objects built against another toolkit (its setup.h, e.g. wxDEBUG_LEVEL)
+# are all built again; the key is written at once, so a run cut short
+# carries on from where it stopped
+if [ -d "$WORK/obj" ] && [ "$(cat "$WORK/obj/.wxt" 2>/dev/null)" != "$WXT_COMMIT" ]; then
+    rm -rf "${WORK:?}/obj"
+fi
+mkdir -p "$WORK/obj"; echo "$WXT_COMMIT" > "$WORK/obj/.wxt"
 LIBKEY="oxp-jsonlib-gfcrypto-1"
 if [ -d "$WORK/obj" ] && [ "$(cat "$WORK/obj/.libkey" 2>/dev/null)" != "$LIBKEY" ]; then
     PAT='pugixml\.hpp|tinyxml\.h|rapidjson/|ssl/sha1\.h|jsonreader\.h|jsonwriter\.h'
