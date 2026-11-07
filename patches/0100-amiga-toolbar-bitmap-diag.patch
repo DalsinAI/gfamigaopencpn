@@ -1,0 +1,49 @@
+Diagnostics only, never merged: logs the toolbar bitmap as it is made and as it is drawn (lines start AMIGADIAG).
+
+--- a/gui/src/toolbar.cpp
++++ b/gui/src/toolbar.cpp
+@@ -549,6 +549,17 @@
+ void ocpnFloatingToolbarDialog::DrawDC(ocpnDC &dc, double displayScale) {
+   if (m_ptoolbar) {
+     m_ptoolbar->CreateBitmap();
++    static int amiga_ndd = 0;
++    if (amiga_ndd < 30) {
++      amiga_ndd++;
++      wxBitmap &b = m_ptoolbar->GetBitmap();
++      wxImage ci = b.IsOk() ? b.ConvertToImage() : wxImage();
++      wxLogMessage("AMIGADIAG drawdc #%d ok=%d ref=%p at %d,%d px=%d,%d,%d",
++                   amiga_ndd, (int)b.IsOk(), b.IsOk() ? (void *)b.GetRefData() : NULL,
++                   m_position.x, m_position.y, ci.IsOk() ? ci.GetRed(22, 52) : -1,
++                   ci.IsOk() ? ci.GetGreen(22, 52) : -1, ci.IsOk() ? ci.GetBlue(22, 52) : -1);
++      wxLog::FlushActive();
++    }
+     if (m_ptoolbar->GetBitmap().IsOk()) {
+       dc.DrawBitmap(m_ptoolbar->GetBitmap(), m_position.x, m_position.y, false);
+       m_ptoolbar->SetDirty(false);
+@@ -1203,9 +1214,26 @@
+     int yyp = 5;
+   }
+ 
++  static int amiga_ncb = 0;
++  wxString amiga_mp = "-";
++  if (amiga_ncb < 30) {
++    wxColour c;
++    if (mdc.GetPixel(22, 52, &c))
++      amiga_mp = wxString::Format("%d,%d,%d", c.Red(), c.Green(), c.Blue());
++  }
+   mdc.SelectObject(wxNullBitmap);
+ 
+   m_bitmap = bm;
++  if (amiga_ncb < 30) {
++    amiga_ncb++;
++    wxImage ci = bm.ConvertToImage();
++    wxColour bg = GetBackgroundColour();
++    wxLogMessage("AMIGADIAG createbitmap #%d ref=%p %dx%d bg=%d,%d,%d mdcpx=%s imgpx=%d,%d,%d bitmap=%p",
++                 amiga_ncb, (void *)bm.GetRefData(), width, height, bg.Red(), bg.Green(), bg.Blue(), amiga_mp,
++                 ci.IsOk() ? ci.GetRed(22, 52) : -1, ci.IsOk() ? ci.GetGreen(22, 52) : -1,
++                 ci.IsOk() ? ci.GetBlue(22, 52) : -1, (void *)bm.GetBitMap());
++    wxLog::FlushActive();
++  }
+   return m_bitmap;
+ }
+ 
