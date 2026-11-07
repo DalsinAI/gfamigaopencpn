@@ -1,0 +1,94 @@
+OpenCPN 5.14.2 for AmigaOS 3: the world basemap on the first paint.
+- shapefile_basemap: the basemap loads on its own thread (std::async) and
+  draws nothing until it is in, and nothing draws the canvas again when it
+  is, so the chart showed sea only until the view changed. IsLoading() says
+  when a load is still running.
+- chcanv.cpp: a canvas drawn while it was loading sets g_basemap_redraw.
+- ocpn_frame.cpp: the one-second frame timer reloads and repaints the
+  canvases once the load is done.
+
+Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
+
+--- a/gui/include/gui/shapefile_basemap.h
++++ b/gui/include/gui/shapefile_basemap.h
+@@ -184,6 +184,8 @@ public:
+    * loading data.
+    */
+   bool IsUsable() { return _is_usable && !_loading; }
++  /** True while LoadSHP() runs on its own thread. */
++  bool IsLoading() const { return _loading; }
+   size_t MinScale() { return _min_scale; }
+   void RenderViewOnDC(ocpnDC &dc, ViewPort &vp) { DrawPolygonFilled(dc, vp); }
+   static const std::string ConstructPath(const std::string &dir,
+@@ -343,6 +345,12 @@ public:
+   bool IsUsable() {
+     return _basemap_map.size() > 0 && LowestQualityBaseMap().IsUsable();
+   }
++  /** True while any of the set's charts is still being loaded. */
++  bool IsLoading() const {
++    for (const auto &q : _basemap_map)
++      if (q.second.IsLoading()) return true;
++    return false;
++  }
+ 
+   /**
+    * Determines if a line segment between two geographical points crosses any
+--- a/gui/src/chcanv.cpp
++++ b/gui/src/chcanv.cpp
+@@ -196,6 +196,8 @@ static int mouse_x;
+ static int mouse_y;
+ static bool mouse_leftisdown;
+ static bool g_brouteCreating;
++// set when a canvas was drawn while the world basemap was still loading
++bool g_basemap_redraw = false;
+ static int r_gamma_mult;
+ static int g_gamma_mult;
+ static int b_gamma_mult;
+@@ -12343,6 +12345,9 @@ void ChartCanvas::OnPaint(wxPaintEvent &event) {
+ 
+       // pWorldBackgroundChart->RenderViewOnDC(bgdc, VPoint);
+       gShapeBasemap.RenderViewOnDC(bgdc, VPoint);
++      // the basemap loads on its own thread and draws nothing until it is
++      // in; the frame's timer draws the canvases again when it is
++      if (gShapeBasemap.IsLoading()) g_basemap_redraw = true;
+ 
+       SetVPRotation(r);
+     }
+--- a/gui/src/ocpn_frame.cpp
++++ b/gui/src/ocpn_frame.cpp
+@@ -108,6 +108,7 @@
+ #include "chart_ctx_factory.h"
+ #include "chartdb.h"
+ #include "chcanv.h"
++#include "shapefile_basemap.h"
+ #include "tc_win.h"
+ #include "cm93.h"
+ #include "color_handler.h"
+@@ -166,6 +167,7 @@ static constexpr long kFrameStyle = wxDEFAULT_FRAME_STYLE | wxWANTS_CHARS;
+ //------------------------------------------------------------------------------
+ //
+ 
++extern bool g_basemap_redraw;
+ extern options *g_pOptions;  // FIXME (leamas) same as g_options, merge
+ MyFrame *gFrame;
+ 
+@@ -5630,6 +5632,19 @@ void MyFrame::OnFrameTimer1(wxTimerEvent &event) {
+   ProcessAnchorWatch();
+   ProcessLogAndBells();
+ 
++  // a canvas drawn while the world basemap was loading showed sea only:
++  // draw them again now that it is in
++  if (g_basemap_redraw && !gShapeBasemap.IsLoading()) {
++    g_basemap_redraw = false;
++    for (unsigned int i = 0; i < g_canvasArray.GetCount(); i++) {
++      ChartCanvas *cc = g_canvasArray.Item(i);
++      if (cc) {
++        cc->ReloadVP();
++        cc->Refresh(false);
++      }
++    }
++  }
++
+   if (ShouldRestartTrack()) TrackDailyRestart();
+ 
+   // If no alerts are on, then safe to resume sleeping
