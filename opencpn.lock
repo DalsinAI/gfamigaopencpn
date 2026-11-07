@@ -6,9 +6,9 @@ OCPN_COMMIT=bd6986a0854d89c662a3d3cab011e629337fcb88
 # shapelib 1.6.1, which OpenCPN's CMake fetches too
 SHAPELIB_REPO=https://github.com/OSGeo/shapelib
 SHAPELIB_COMMIT=8e23c958f3dd1f5cc37139ce4f4e2824a84bc56a
-# GFOpenWX Toolkit (wxWidgets on GFOpenLayout), main
+# GFOpenWX Toolkit (wxWidgets on GFOpenLayout): PR #17 head, olui repaint fix (lab test)
 WXT_REPO=https://github.com/DalsinAI/gfopenwxtoolkit
-WXT_COMMIT=7fb2de8eb56eac123103f5cbff0cd787ab937268
+WXT_COMMIT=5e41f9df284fe9dc4049d9c3fb729a115b6be936
 # fpuauto (amicradle-guest common/fpuauto): the FPU when there is one
 FPUAUTO_REPO=https://github.com/DalsinAI/amicradle-guest
 FPUAUTO_COMMIT=4a784c84b878fe0e9abade7006e67e1ded9b165c
