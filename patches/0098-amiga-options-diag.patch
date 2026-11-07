@@ -1,0 +1,21 @@
+DIAG ONLY, never merge: logs the options dialog position and size around Show().
+
+--- a/gui/src/ocpn_frame.cpp
++++ b/gui/src/ocpn_frame.cpp
+@@ -4112,7 +4112,15 @@ void MyFrame::DoOptionsDialog() {
+   // Record current chart scale factor
+   g_last_ChartScaleFactor = g_ChartScaleFactor;
+ 
+-  g_options->Show();
++  wxLogMessage("AMIGADIAG options before Show: shown %d pos %d,%d size %d,%d last %d,%d %d,%d",
++               g_options->IsShown(), g_options->GetPosition().x, g_options->GetPosition().y,
++               g_options->GetSize().x, g_options->GetSize().y, options_lastWindowPos.x,
++               options_lastWindowPos.y, options_lastWindowSize.x, options_lastWindowSize.y);
++  bool shown_ok = g_options->Show();
++  wxLogMessage("AMIGADIAG options after Show: ret %d shown %d pos %d,%d size %d,%d client %d,%d children %d",
++               shown_ok, g_options->IsShown(), g_options->GetPosition().x, g_options->GetPosition().y,
++               g_options->GetSize().x, g_options->GetSize().y, g_options->GetClientSize().x,
++               g_options->GetClientSize().y, (int)g_options->GetChildren().GetCount());
+   return;
+ }
+ 
