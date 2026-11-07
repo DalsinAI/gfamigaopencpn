@@ -1,0 +1,21 @@
+OpenCPN 5.14.2 for AmigaOS 3: date formatting in the non-Unicode wx build.
+- datetime.cpp: wxString(wxUniChar(0x202F)) is empty where the build's
+  character set cannot hold it, and Replace() of an empty string failed a
+  debug check each time a date was formatted; it is skipped when empty.
+
+Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
+
+--- a/model/src/datetime.cpp
++++ b/model/src/datetime.cpp
+@@ -103,7 +103,10 @@
+   }
+   // wxDateTime::Format() does not work when the format string contains 0x202F
+   // (narrow no-break space). Replace it with a regular space.
+-  format.Replace(wxString(wxUniChar(0x202F)), " ");
++  // A build whose character set cannot hold 0x202F makes an empty string of
++  // it, and Replace() of an empty string fails a debug check.
++  const wxString nnbsp(wxUniChar(0x202F));
++  if (!nnbsp.empty()) format.Replace(nnbsp, " ");
+   wxString ret;
+   wxString tzName;
+   if (effective_time_zone == "Local Time") {

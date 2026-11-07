@@ -1,0 +1,45 @@
+OpenCPN 5.14.2 for AmigaOS 3: type names that exec/types.h also has.
+amiga_first.h includes exec/types.h before every file, and three files make
+their own WORD, LONG or BYTE: the tide data reader and LZ4. Their own names
+are renamed for those files (a clean build stopped on them).
+
+Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
+
+--- a/gui/src/tcds_binary_harmonic.cpp
++++ b/gui/src/tcds_binary_harmonic.cpp
+@@ -66,6 +66,11 @@
+  */
+ 
+ #ifndef __WXMSW__
++#ifdef __AMIGAOS3__
++/* exec/types.h (amiga_first.h) has its own WORD and LONG */
++#define WORD OCPN_WORD
++#define LONG OCPN_LONG
++#endif
+ typedef unsigned short WORD;
+ typedef long LONG;
+ typedef char WCHAR;
+--- a/libs/lz4/src/lz4.c
++++ b/libs/lz4/src/lz4.c
+@@ -175,6 +175,9 @@
+ **************************************/
+ #if defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)   /* C99 */
+ # include <stdint.h>
++# ifdef __AMIGAOS3__
++#  define BYTE LZ4_BYTE  /* exec/types.h (amiga_first.h) has its own BYTE */
++# endif
+   typedef  uint8_t BYTE;
+   typedef uint16_t U16;
+   typedef uint32_t U32;
+--- a/libs/lz4/src/lz4hc.c
++++ b/libs/lz4/src/lz4hc.c
+@@ -145,6 +145,9 @@
+ **************************************/
+ #if defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)   /* C99 */
+ # include <stdint.h>
++# ifdef __AMIGAOS3__
++#  define BYTE LZ4_BYTE  /* exec/types.h (amiga_first.h) has its own BYTE */
++# endif
+   typedef uint8_t  BYTE;
+   typedef uint16_t U16;
+   typedef uint32_t U32;
