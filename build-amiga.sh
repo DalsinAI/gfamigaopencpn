@@ -232,11 +232,18 @@ done
 [ -d "$SRC/plugins/icons" ] && cp -R "$SRC/plugins/icons" "$D/uidata/plugins"
 cp "$SRC"/data/ssfn/*.sfn "$D/ssfndata/"
 cp "$SRC/COPYING.gplv2" "$P/" 2>/dev/null || :
+# the Workbench side (package/): the program's and the drawer's GlowIcons,
+# and the Amiga Installer script with its icon beside the drawer, made by
+# amicradle's scripts/port_icons.py and port_installer.py from
+# package/icons.json and package/installer.json
+cp "$HERE/package/icons/OpenCPN.info" "$P/OpenCPN.info"
+cp "$HERE/package/icons/OpenCPN-drawer.info" "$WORK/pkg/OpenCPN.info"
+cp "$HERE/package/installer/Install-OpenCPN" "$HERE/package/installer/Install-OpenCPN.info" "$WORK/pkg/"
 if command -v lha >/dev/null 2>&1; then
-    (cd "$WORK/pkg" && lha -aq "$OUT/OpenCPN-$OCPN_VERSION.lha" OpenCPN >/dev/null) && ls -l "$OUT/OpenCPN-$OCPN_VERSION.lha"
+    (cd "$WORK/pkg" && lha -aq "$OUT/OpenCPN-$OCPN_VERSION.lha" OpenCPN OpenCPN.info Install-OpenCPN Install-OpenCPN.info >/dev/null) && ls -l "$OUT/OpenCPN-$OCPN_VERSION.lha"
 elif command -v jlha >/dev/null 2>&1; then
-    (cd "$WORK/pkg" && jlha -aq "$OUT/OpenCPN-$OCPN_VERSION.lha" OpenCPN >/dev/null) && ls -l "$OUT/OpenCPN-$OCPN_VERSION.lha"
+    (cd "$WORK/pkg" && jlha -aq "$OUT/OpenCPN-$OCPN_VERSION.lha" OpenCPN OpenCPN.info Install-OpenCPN Install-OpenCPN.info >/dev/null) && ls -l "$OUT/OpenCPN-$OCPN_VERSION.lha"
 else
-    (cd "$WORK/pkg" && tar cf "$OUT/OpenCPN-$OCPN_VERSION.tar" OpenCPN) && echo "no lha here: $OUT/OpenCPN-$OCPN_VERSION.tar"
+    (cd "$WORK/pkg" && tar cf "$OUT/OpenCPN-$OCPN_VERSION.tar" OpenCPN OpenCPN.info Install-OpenCPN Install-OpenCPN.info) && echo "no lha here: $OUT/OpenCPN-$OCPN_VERSION.tar"
 fi
 echo "total: $(( $(date +%s) - t0 )) s"

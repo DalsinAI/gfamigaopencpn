@@ -17,6 +17,10 @@ OpenCPN and what it builds on are fetched at build time at the commits `opencpn.
 - NMEA 0183 and NMEA 2000 over TCP and UDP use the toolkit's sockets (bsdsocket.library).
 - Not in this build yet (`patches/0005`, `src/net_parked.cpp`): Signal K, the REST server and sending routes to another OpenCPN, mDNS discovery, and downloads (chart catalogues), which need a websocket, HTTP server and HTTP client on bsdsocket; plugins (shared libraries elsewhere, `patches/0002`); Garmin host mode upload (`patches/0004`).
 
+## Installing
+
+The archive holds the `OpenCPN` drawer with its icon, and `Install-OpenCPN`. Unpack it anywhere (`SYS:Utilities/GFOpenCompress x OpenCPN-5.14.2.lha RAM:`) and double-click `Install-OpenCPN`: it checks for a 68040 or later, asks where to put the drawer (Work: by default), and copies it. An update leaves the drawer's `User` (settings, log, routes) as it is. `package/` holds the Installer and icon specs; the files in `package/installer` and `package/icons` are made from them by amicradle's `scripts/port_installer.py` and `scripts/port_icons.py`.
+
 ## Building
 
 ```
