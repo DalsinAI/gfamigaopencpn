@@ -97,6 +97,9 @@ if [ "$(cat "$SQL/.stamp" 2>/dev/null)" != "$GFSQLITE_COMMIT $SQLITE_SHA256" ]; 
     (cd "$WORK/deps" && rm -rf "$SQLITE_ZIP" && unzip -q "$Z")
     cp "$WORK/deps/$SQLITE_ZIP"/sqlite3.c "$WORK/deps/$SQLITE_ZIP"/sqlite3.h "$WORK/deps/$SQLITE_ZIP"/sqlite3ext.h "$SQL"/
     patch -s -d "$SQL" -p1 < "$GFSQL/patches/sqlite-3.53.4-amiga-paths.patch"
+    # a seek past the end of a file reads nothing and a write there grows the
+    # file with zeros first on AmigaDOS (navobj.db came out 24 bytes long)
+    patch -s -d "$SQL" -p1 < "$GFSQL/patches/sqlite-3.53.4-amiga-seek.patch"
     echo "$GFSQLITE_COMMIT $SQLITE_SHA256" > "$SQL/.stamp"
 fi
 

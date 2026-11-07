@@ -91,7 +91,7 @@ $(OBJ)/libs/glu/%: CFLAGS := -I$(L)/glu/include -I$(L)/glu/libtess $(CFLAGS)
 # written for
 SQLFLAGS := $(OPT) -MMD -MP -D_DEFAULT_SOURCE=1 -D_POSIX_TIMERS=1 -D_POSIX_REALTIME_SIGNALS=1 -fno-common \
     -DSQLITE_THREADSAFE=1 -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_OMIT_WAL -DSQLITE_MAX_MMAP_SIZE=0 \
-    -DSQLITE_DEFAULT_MEMSTATUS=0 -DHAVE_USLEEP=1 -DSQLITE_OS_UNIX=1 '-DSQLITE_DEFAULT_UNIX_VFS="unix-dotfile"' \
+    -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DISABLE_DIRSYNC -DHAVE_USLEEP=1 -DSQLITE_OS_UNIX=1 '-DSQLITE_DEFAULT_UNIX_VFS="unix-dotfile"' \
     -DSQLITE_EXTRA_AUTOEXT=sqlite_amiga_autoext -I$(SQL) -include $(GFSQL)/compat/sqlite_amiga_pre.h -w
 $(OBJ)/sql/sqlite3.c.o: $(SQL)/sqlite3.c
 	@mkdir -p $(dir $@)
