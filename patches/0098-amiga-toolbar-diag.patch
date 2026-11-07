@@ -1,0 +1,37 @@
+Diagnostics only, never merged: logs each toolbar tool's icon and the pixel drawn (lines start AMIGADIAG).
+
+--- a/gui/src/toolbar.cpp
++++ b/gui/src/toolbar.cpp
+@@ -1200,6 +1200,32 @@
+     if (tools->m_activeBitmap.IsOk()) {
+       mdc.DrawBitmap(tools->m_activeBitmap, tools->m_x, tools->m_y, false);
+     }
++    {
++      static int amiga_ndiag = 0;
++      if (amiga_ndiag < 40) {
++        amiga_ndiag++;
++        const wxBitmap &ab = tools->m_activeBitmap;
++        wxString ac = "-", dc = "-";
++        if (ab.IsOk()) {
++          wxImage ai = ab.ConvertToImage();
++          int cx = ai.GetWidth() / 2, cy = ai.GetHeight() / 4;
++          ac = wxString::Format("%d,%d,%d a=%d", ai.GetRed(cx, cy),
++                                ai.GetGreen(cx, cy), ai.GetBlue(cx, cy),
++                                ai.HasAlpha() ? ai.GetAlpha(cx, cy) : -1);
++          wxColour pc;
++          if (mdc.GetPixel(tools->m_x + cx, tools->m_y + cy, &pc))
++            dc = wxString::Format("%d,%d,%d", pc.Red(), pc.Green(), pc.Blue());
++        }
++        wxLogMessage(
++            "AMIGADIAG tool %s icon=%s ok=%d %dx%d depth=%d alpha=%d at %d,%d "
++            "bm=%dx%d iconpx=%s dcpx=%s",
++            tools->GetToolname(), tools->GetIconName(), (int)ab.IsOk(),
++            ab.IsOk() ? ab.GetWidth() : 0, ab.IsOk() ? ab.GetHeight() : 0,
++            ab.IsOk() ? ab.GetDepth() : 0, ab.IsOk() ? (int)ab.HasAlpha() : 0,
++            tools->m_x, tools->m_y, width, height, ac, dc);
++        wxLog::FlushActive();
++      }
++    }
+     int yyp = 5;
+   }
+ 
