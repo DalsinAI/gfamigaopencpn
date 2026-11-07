@@ -6,9 +6,9 @@ OCPN_COMMIT=bd6986a0854d89c662a3d3cab011e629337fcb88
 # shapelib 1.6.1, which OpenCPN's CMake fetches too
 SHAPELIB_REPO=https://github.com/OSGeo/shapelib
 SHAPELIB_COMMIT=8e23c958f3dd1f5cc37139ce4f4e2824a84bc56a
-# GFOpenWX Toolkit (wxWidgets on GFOpenLayout): 182ffe0, merged into main by #20 (main 0dff5f9, same tree): the memory DC keeps its drawing
+# GFOpenWX Toolkit (wxWidgets on GFOpenLayout): lab test of branch team3/raise-owned-front-20261107 (dialogs in front, button widths, combo box field)
 WXT_REPO=https://github.com/DalsinAI/gfopenwxtoolkit
-WXT_COMMIT=182ffe0c6735616d3812c7b9456a32af383481ae
+WXT_COMMIT=9a47fdf9dc6444c0fd392ad17d8680eacd276a86
 # fpuauto (amicradle-guest common/fpuauto): the FPU when there is one
 FPUAUTO_REPO=https://github.com/DalsinAI/amicradle-guest
 FPUAUTO_COMMIT=4a784c84b878fe0e9abade7006e67e1ded9b165c
