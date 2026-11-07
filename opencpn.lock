@@ -16,7 +16,7 @@ FPUAUTO_COMMIT=4a784c84b878fe0e9abade7006e67e1ded9b165c
 # on Lock(), fchmod/fchown) in place of the copy OpenCPN carries, with the
 # amalgamation it names in its SOURCES
 GFSQLITE_REPO=https://github.com/DalsinAI/gfopensqlite
-GFSQLITE_COMMIT=f821293172134471c33602d0839257a710ad853c
+GFSQLITE_COMMIT=fa780b9dc44de40050ce381e0fd6dd84c174ee1a
 SQLITE_ZIP=sqlite-amalgamation-3530400
 SQLITE_URL=https://www.sqlite.org/2026/sqlite-amalgamation-3530400.zip
 SQLITE_SHA256=1e71ddf93849c6a6ecf58b827c0692073d2dd7ee40196158068f7b29f422e87d

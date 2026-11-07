@@ -1,0 +1,71 @@
+OpenCPN 5.14.2 for AmigaOS 3: the deferred start-up, a debug check and the arch name.
+- ocpn_frame.cpp: after the first-start wizard OpenCPN rebuilds the chart
+  database and resumes its deferred start-up when the rebuild ends. With no
+  chart folders no rebuild runs and nothing resumed it: the main window
+  stayed blank, with no toolbar. The start-up now resumes at once.
+- navutil_base.cpp: helpers made with wxString::FromUTF8 are empty where the
+  build's character set cannot hold them, and Replace() of an empty string
+  failed a debug check at start; they are skipped when empty.
+- base_platform.cpp: the processor is m68k (it said i386).
+
+Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
+
+--- a/gui/src/ocpn_frame.cpp
++++ b/gui/src/ocpn_frame.cpp
+@@ -865,6 +865,11 @@
+ 
+     LoadS57();
+     ChartData->Create(ChartDirArray, pprog);
++  } else if (!g_bDeferredInitDone) {
++    // No chart folders yet (a first start where the wizard added none): no
++    // rebuild runs, so nothing would call FinalizeChartDBUpdate() to resume
++    // the deferred start-up, and it stopped here with a blank chart area.
++    InitTimer.Start(100, wxTIMER_ONE_SHOT);
+   }
+ }
+ 
+--- a/model/src/base_platform.cpp
++++ b/model/src/base_platform.cpp
+@@ -589,6 +589,10 @@
+   wxArchitecture arch = platformInfo.GetArchitecture();
+   if (arch == wxARCH_32) detail->osd_arch = std::string("i386");
+ 
++#ifdef __AMIGAOS3__
++  detail->osd_arch = std::string("m68k");
++#endif
++
+ #ifdef ocpnARM
+   //  arm supports a multiarch runtime environment
+   //  That is, the OS may be 64 bit, but OCPN may be built as a 32 bit binary
+--- a/model/src/navutil_base.cpp
++++ b/model/src/navutil_base.cpp
+@@ -733,22 +733,23 @@
+   double stk[32], sign = 1;
+ 
+   // First round of string modifications to accomodate some known strange
+-  // formats
++  // formats (a helper is empty where the build's character set cannot hold
++  // it, as on AmigaOS, and Replace() of an empty string fails a debug check)
+   wxString replhelper;
+   replhelper = wxString::FromUTF8("´·");  // UKHO PDFs
+-  sdms.Replace(replhelper, ".");
++  if (!replhelper.empty()) sdms.Replace(replhelper, ".");
+   replhelper =
+       wxString::FromUTF8("\"·");  // Don't know if used, but to make sure
+-  sdms.Replace(replhelper, ".");
++  if (!replhelper.empty()) sdms.Replace(replhelper, ".");
+   replhelper = wxString::FromUTF8("·");
+-  sdms.Replace(replhelper, ".");
++  if (!replhelper.empty()) sdms.Replace(replhelper, ".");
+ 
+   replhelper =
+       wxString::FromUTF8("s. š.");  // Another example: cs.wikipedia.org
+                                     // (someone was too active translating...)
+-  sdms.Replace(replhelper, "N");
++  if (!replhelper.empty()) sdms.Replace(replhelper, "N");
+   replhelper = wxString::FromUTF8("j. š.");
+-  sdms.Replace(replhelper, "S");
++  if (!replhelper.empty()) sdms.Replace(replhelper, "S");
+   sdms.Replace("v. d.", "E");
+   sdms.Replace("z. d.", "W");
+ 
