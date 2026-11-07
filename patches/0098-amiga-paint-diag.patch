@@ -1,0 +1,43 @@
+Diagnostics only, never merged: logs ChartCanvas::OnPaint state (lines start AMIGADIAG).
+
+--- a/gui/src/chcanv.cpp
++++ b/gui/src/chcanv.cpp
+@@ -11994,6 +11994,21 @@
+   //  paint message may not be removed from the message queue, esp on Windows.
+   //  (FS#1213) This would lead to a deadlock condition in ::wxYield()
+ 
++  {
++    static int amiga_npaint = 0;
++    amiga_npaint++;
++    if (amiga_npaint <= 30 || amiga_npaint % 100 == 0) {
++      wxRect amiga_ub = GetUpdateRegion().GetBox();
++      wxLogMessage("AMIGADIAG paint #%d enable=%d vp=%dx%d quilt=%d quiltobj=%d composed=%d single=%d upd=%d,%d %dx%d client=%dx%d",
++                   amiga_npaint, (int)m_b_paint_enable, GetVP().pix_width,
++                   GetVP().pix_height, (int)GetVP().b_quilt, (int)(m_pQuilt != NULL),
++                   (int)(m_pQuilt && m_pQuilt->IsComposed()),
++                   (int)(m_singleChart != NULL), amiga_ub.x, amiga_ub.y,
++                   amiga_ub.width, amiga_ub.height, GetClientSize().x,
++                   GetClientSize().y);
++      wxLog::FlushActive();
++    }
++  }
+   if (!m_b_paint_enable) {
+     return;
+   }
+@@ -12598,6 +12613,16 @@
+   DrawOverlayObjects(scratch_dc, ru);
+ 
+   //    And finally, blit the scratch dc onto the physical dc
++  {
++    static int amiga_nblit = 0;
++    if (++amiga_nblit <= 10 || amiga_nblit % 100 == 0) {
++      wxRect amiga_bb = rgn_blit.GetBox();
++      wxLogMessage("AMIGADIAG blit #%d rgn=%d,%d %dx%d dcok=%d scratchok=%d", amiga_nblit,
++                   amiga_bb.x, amiga_bb.y, amiga_bb.width, amiga_bb.height,
++                   (int)dc.IsOk(), (int)mscratch_dc.IsOk());
++      wxLog::FlushActive();
++    }
++  }
+   wxRegionIterator upd_final(rgn_blit);
+   while (upd_final) {
+     wxRect rect = upd_final.GetRect();
