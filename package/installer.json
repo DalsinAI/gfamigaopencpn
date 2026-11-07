@@ -1,0 +1,13 @@
+{
+  "name": "OpenCPN",
+  "version": "5.14.2-amiga.2",
+  "drawer": "OpenCPN",
+  "program": "OpenCPN",
+  "cpu": "68040",
+  "fpu": false,
+  "space": 100000000,
+  "modules": [],
+  "keep": ["User"],
+  "parent": "Work:",
+  "badge": "art/opencpn.png"
+}

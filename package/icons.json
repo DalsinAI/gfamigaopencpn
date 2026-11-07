@@ -1,0 +1,16 @@
+{
+  "drawer": {
+    "name": "OpenCPN",
+    "width": 200,
+    "height": 100,
+    "file": "OpenCPN-drawer.info"
+  },
+  "badge": "art/opencpn.png",
+  "icons": [
+    {
+      "file": "OpenCPN.info",
+      "kind": "tool",
+      "stack": 1048576
+    }
+  ]
+}
