@@ -20,7 +20,7 @@ Copyright (c) 2026 AmiCradle Team (these changes; GPL v2 or later, as OpenCPN)
 +    // No chart folders yet (a first start where the wizard added none): no
 +    // rebuild runs, so nothing would call FinalizeChartDBUpdate() to resume
 +    // the deferred start-up, and it stopped here with a blank chart area.
-+    InitTimer.Start(100, wxTIMER_ONE_SHOT);
++    if (gFrame) gFrame->InitTimer.Start(100, wxTIMER_ONE_SHOT);
    }
  }
  
