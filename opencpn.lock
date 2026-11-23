@@ -8,7 +8,7 @@ SHAPELIB_REPO=https://github.com/OSGeo/shapelib
 SHAPELIB_COMMIT=8e23c958f3dd1f5cc37139ce4f4e2824a84bc56a
 # GFOpenWX Toolkit (wxWidgets on GFOpenLayout): main f9c9a20, #22 (dialogs in front, button widths, combo box, markup styles kept, Amiga volumes in wxDirDialog)
 WXT_REPO=https://github.com/DalsinAI/gfopenwxtoolkit
-WXT_COMMIT=f9c9a200c3cde90dfb5c066ed1568521514437d6
+WXT_COMMIT=2b2db788892b0379438ae7201821b93789610861   # toolkit main: GFOpenLayout UI through gfopenlayout.library 12+ (gfopenwxtoolkit PR 1)
 # fpuauto (amicradle-guest common/fpuauto): the FPU when there is one
 FPUAUTO_REPO=https://github.com/DalsinAI/amicradle-guest
 FPUAUTO_COMMIT=4a784c84b878fe0e9abade7006e67e1ded9b165c
