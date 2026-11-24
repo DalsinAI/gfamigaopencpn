@@ -4,6 +4,10 @@ OpenCPN 5.14.2, the chart plotter and navigation program, for AmigaOS 3 (68040; 
 
 OpenCPN and what it builds on are fetched at build time at the commits `opencpn.lock` pins, and `patches/` is applied to OpenCPN; nothing third-party is kept in this repository.
 
+## Needs
+
+`gfopenlayout.library` 12 or later in `LIBS:`. OpenCPN's windows are drawn by GFOpenLayout through that library, not a copy built into the program (GFOffice Libs ships version 25). Without it OpenCPN says "This needs gfopenlayout.library 12 or later in LIBS:" and stops.
+
 ## How it works
 
 - OpenCPN's windows, menus, dialogs, tool bars and docking panes are wx, drawn by the GFOpenWX Toolkit.
